@@ -1,8 +1,11 @@
 package com.geuphalttaen.domain.auth
 
+import io.jsonwebtoken.Jwts
+import io.jsonwebtoken.security.Keys
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.util.Date
 
 class JwtProviderTest {
 
@@ -64,5 +67,20 @@ class JwtProviderTest {
 
         assertThat(jwtProvider.isValid(token)).isTrue()
         assertThat(jwtProvider.getUserId(token)).isEqualTo(userId)
+    }
+
+    @Test
+    fun `isValid - 만료된 토큰이면 false를 반환한다`() {
+        // 이미 만료된 시각으로 expiration을 설정하여 만료 토큰 생성
+        val key = Keys.hmacShaKeyFor(testSecret.toByteArray(Charsets.UTF_8))
+        val now = Date()
+        val expiredToken = Jwts.builder()
+            .subject("1")
+            .issuedAt(Date(now.time - 2_000L))
+            .expiration(Date(now.time - 1_000L)) // 1초 전에 이미 만료
+            .signWith(key)
+            .compact()
+
+        assertThat(jwtProvider.isValid(expiredToken)).isFalse()
     }
 }
