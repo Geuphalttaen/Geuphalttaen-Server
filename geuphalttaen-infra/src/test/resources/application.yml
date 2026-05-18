@@ -1,0 +1,21 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: false
+    open-in-view: false
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+jwt:
+  secret: test-secret-key-must-be-at-least-32-characters-long-for-hmac
+
+opendata:
+  toilet:
+    api-key: ""
+    base-url: "https://api.odcloud.kr/api"
