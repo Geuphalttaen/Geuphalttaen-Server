@@ -1,6 +1,7 @@
 package com.geuphalttaen.infra.oauth
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.geuphalttaen.common.exception.BusinessException
 import com.geuphalttaen.common.exception.ErrorCode
 import com.geuphalttaen.domain.auth.OAuthClientPort
@@ -8,6 +9,8 @@ import com.geuphalttaen.domain.auth.OAuthUserInfo
 import io.jsonwebtoken.Jwts
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
+import org.springframework.web.client.HttpStatusCodeException
+import org.springframework.web.client.ResourceAccessException
 import org.springframework.web.client.RestClient
 import java.math.BigInteger
 import java.security.KeyFactory
@@ -37,6 +40,7 @@ open class AppleOAuthClient : OAuthClientPort {
     // 인메모리 캐시: kid → PublicKey, expiresAt
     private val keyCache = ConcurrentHashMap<String, CachedPublicKey>()
     private val cacheDurationSeconds = 3600L // 1시간
+    private val objectMapper = ObjectMapper()
 
     override fun getUserInfo(accessToken: String): OAuthUserInfo {
         return try {
@@ -75,17 +79,32 @@ open class AppleOAuthClient : OAuthClientPort {
         }
 
         // Apple 공개키 목록 조회
-        val keysResponse = restClient.get()
-            .uri("/auth/keys")
-            .retrieve()
-            .body(ApplePublicKeysResponse::class.java)
-            ?: throw BusinessException(ErrorCode.OAUTH_INVALID_TOKEN)
+        val keysResponse = try {
+            restClient.get()
+                .uri("/auth/keys")
+                .retrieve()
+                .body(ApplePublicKeysResponse::class.java)
+                ?: throw BusinessException(ErrorCode.OAUTH_INVALID_TOKEN)
+        } catch (e: BusinessException) {
+            throw e
+        } catch (e: ResourceAccessException) {
+            log.warn("Apple JWKS 서버 연결 실패: {}", e.message)
+            throw BusinessException(ErrorCode.OAUTH_INVALID_TOKEN)
+        } catch (e: HttpStatusCodeException) {
+            log.warn("Apple JWKS 서버 연결 실패: status={}", e.statusCode)
+            throw BusinessException(ErrorCode.OAUTH_INVALID_TOKEN)
+        }
 
         val keyInfo = keysResponse.keys.find { it.kid == kid }
             ?: throw BusinessException(ErrorCode.OAUTH_INVALID_TOKEN)
 
         val publicKey = buildPublicKey(keyInfo)
         val expiresAt = Instant.now().epochSecond + cacheDurationSeconds
+
+        // 만료된 캐시 항목 정리
+        val now = Instant.now().epochSecond
+        keyCache.entries.removeIf { it.value.expiresAt <= now }
+
         keyCache[kid] = CachedPublicKey(publicKey, expiresAt)
         return publicKey
     }
@@ -106,7 +125,7 @@ open class AppleOAuthClient : OAuthClientPort {
             ?: throw BusinessException(ErrorCode.OAUTH_INVALID_TOKEN)
         val headerJson = String(Base64.getUrlDecoder().decode(headerEncoded), Charsets.UTF_8)
         @Suppress("UNCHECKED_CAST")
-        return com.fasterxml.jackson.databind.ObjectMapper().readValue(headerJson, Map::class.java) as Map<String, Any>
+        return objectMapper.readValue(headerJson, Map::class.java) as Map<String, Any>
     }
 }
 

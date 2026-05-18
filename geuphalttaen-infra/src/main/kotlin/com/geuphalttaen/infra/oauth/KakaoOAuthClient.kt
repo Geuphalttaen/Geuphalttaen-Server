@@ -12,6 +12,8 @@ import org.slf4j.LoggerFactory
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
 import org.springframework.stereotype.Component
 import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.client.HttpServerErrorException
+import org.springframework.web.client.ResourceAccessException
 import org.springframework.web.client.RestClient
 
 /**
@@ -51,6 +53,12 @@ open class KakaoOAuthClient(
                 ?: throw BusinessException(ErrorCode.OAUTH_INVALID_TOKEN)
         } catch (e: HttpClientErrorException) {
             log.warn("카카오 사용자 정보 조회 실패: status={}", e.statusCode)
+            throw BusinessException(ErrorCode.OAUTH_INVALID_TOKEN)
+        } catch (e: HttpServerErrorException) {
+            log.warn("카카오 서버 오류: status={}", e.statusCode)
+            throw BusinessException(ErrorCode.OAUTH_INVALID_TOKEN)
+        } catch (e: ResourceAccessException) {
+            log.warn("카카오 서버 연결 실패: {}", e.message)
             throw BusinessException(ErrorCode.OAUTH_INVALID_TOKEN)
         }
 
