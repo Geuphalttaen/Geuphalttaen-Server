@@ -33,7 +33,7 @@ class AuthController(
     @Operation(summary = "Access Token 갱신")
     @PostMapping("/refresh")
     fun refresh(
-        @RequestBody request: RefreshRequest,
+        @Valid @RequestBody request: RefreshRequest,
     ): ApiResponse<TokenResponse> {
         val tokenResponse = authService.refresh(request.refreshToken)
         return ApiResponse.ok(tokenResponse)

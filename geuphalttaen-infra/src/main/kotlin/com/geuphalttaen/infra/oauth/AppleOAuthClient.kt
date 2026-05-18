@@ -23,11 +23,14 @@ import java.util.concurrent.ConcurrentHashMap
  * Apple 공개키는 1시간 단위로 인메모리 캐시한다.
  */
 @Component("APPLE")
-class AppleOAuthClient : OAuthClientPort {
+open class AppleOAuthClient : OAuthClientPort {
 
     private val log = LoggerFactory.getLogger(javaClass)
 
-    private val restClient: RestClient = RestClient.builder()
+    private val restClient: RestClient by lazy { buildRestClient() }
+
+    /** 테스트에서 오버라이드하여 MockRestServiceServer를 바인딩할 수 있도록 open으로 노출 */
+    open fun buildRestClient(): RestClient = RestClient.builder()
         .baseUrl("https://appleid.apple.com")
         .build()
 

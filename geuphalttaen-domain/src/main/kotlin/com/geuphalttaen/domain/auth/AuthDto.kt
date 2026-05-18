@@ -1,8 +1,10 @@
 package com.geuphalttaen.domain.auth
 
+import jakarta.validation.constraints.NotBlank
+
 data class OAuthLoginRequest(
-    val provider: String,
-    val accessToken: String,
+    @field:NotBlank val provider: String,
+    @field:NotBlank val accessToken: String,
 )
 
 data class TokenResponse(
@@ -11,5 +13,5 @@ data class TokenResponse(
 )
 
 data class RefreshRequest(
-    val refreshToken: String,
+    @field:NotBlank val refreshToken: String,
 )

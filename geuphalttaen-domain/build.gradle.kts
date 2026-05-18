@@ -10,6 +10,7 @@ dependencies {
     implementation(project(":geuphalttaen-core"))
 
     implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
 
     // jjwt
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")

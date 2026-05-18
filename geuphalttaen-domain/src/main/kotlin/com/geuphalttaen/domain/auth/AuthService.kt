@@ -28,7 +28,7 @@ class AuthService(
         val oauthUser = oauthClient.getUserInfo(request.accessToken)
 
         val provider = OAuthProvider.valueOf(request.provider.uppercase())
-        val user = userRepository.findByProviderAndProviderId(request.provider, oauthUser.providerId)
+        val user = userRepository.findByProviderAndProviderId(request.provider.uppercase(), oauthUser.providerId)
             ?: userRepository.save(
                 UserEntity(
                     provider = provider,
