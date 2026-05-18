@@ -94,6 +94,22 @@ class KakaoOAuthClientTest {
         mockServer.verify()
     }
 
+    @Test
+    fun `getUserInfo - 500 응답이면 OAUTH_INVALID_TOKEN 예외를 던진다`() {
+        val accessToken = "valid-token"
+
+        mockServer.expect(requestTo("https://kapi.kakao.com/v2/user/me"))
+            .andExpect(method(HttpMethod.GET))
+            .andRespond(withStatus(HttpStatus.INTERNAL_SERVER_ERROR))
+
+        assertThatThrownBy { kakaoOAuthClient.getUserInfo(accessToken) }
+            .isInstanceOf(BusinessException::class.java)
+            .extracting { (it as BusinessException).errorCode }
+            .isEqualTo(ErrorCode.OAUTH_INVALID_TOKEN)
+
+        mockServer.verify()
+    }
+
     /**
      * 테스트용 KakaoOAuthClient: RestClient를 외부에서 주입받는다.
      */

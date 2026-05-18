@@ -48,6 +48,7 @@ class AuthService(
      */
     fun refresh(refreshToken: String): TokenResponse {
         if (!jwtProvider.isValid(refreshToken)) throw BusinessException(ErrorCode.INVALID_TOKEN)
+        if (jwtProvider.getTokenType(refreshToken) != "REFRESH") throw BusinessException(ErrorCode.INVALID_TOKEN)
         val userId = jwtProvider.getUserId(refreshToken)
         val stored = refreshTokenRepository.find(userId) ?: throw BusinessException(ErrorCode.TOKEN_NOT_FOUND)
         if (stored != refreshToken) throw BusinessException(ErrorCode.INVALID_TOKEN)

@@ -118,6 +118,17 @@ class AuthServiceTest {
     }
 
     @Test
+    fun `refresh - Access Token을 Refresh Token으로 사용하면 INVALID_TOKEN 예외를 던진다`() {
+        val userId = 5L
+        val accessToken = jwtProvider.generateAccessToken(userId)
+
+        assertThatThrownBy { authService.refresh(accessToken) }
+            .isInstanceOf(BusinessException::class.java)
+            .extracting { (it as BusinessException).errorCode }
+            .isEqualTo(ErrorCode.INVALID_TOKEN)
+    }
+
+    @Test
     fun `refresh - Redis에 토큰이 없으면 TOKEN_NOT_FOUND 예외를 던진다`() {
         val userId = 7L
         val validRefreshToken = jwtProvider.generateRefreshToken(userId)
