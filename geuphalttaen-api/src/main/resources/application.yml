@@ -17,23 +17,18 @@ spring:
         format_sql: false
     open-in-view: false
 
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
+  task:
+    scheduling:
+      pool:
+        size: 2
 
 jwt:
   secret: ${JWT_SECRET:change-me-this-is-a-very-long-secret-key-for-dev-only}
 
-kakao:
-  oauth:
-    client-id: ${KAKAO_CLIENT_ID:}
-    client-secret: ${KAKAO_CLIENT_SECRET:}
-
 opendata:
   toilet:
     api-key: ${OPENDATA_TOILET_API_KEY:}
-    base-url: ${OPENDATA_TOILET_BASE_URL:https://api.odcloud.kr/api}
+    page-size: 1000
 
 springdoc:
   swagger-ui:
