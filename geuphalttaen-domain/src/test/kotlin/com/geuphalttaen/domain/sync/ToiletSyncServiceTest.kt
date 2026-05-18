@@ -1,6 +1,7 @@
 package com.geuphalttaen.domain.sync
 
 import com.geuphalttaen.core.entity.SyncLogEntity
+import com.geuphalttaen.core.entity.SyncStatus
 import com.geuphalttaen.core.entity.ToiletEntity
 import com.geuphalttaen.core.entity.ToiletStatus
 import com.geuphalttaen.domain.toilet.ToiletRepository
@@ -13,97 +14,116 @@ import org.mockito.kotlin.never
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
-import java.time.LocalDateTime
 
 class ToiletSyncServiceTest {
 
+    private lateinit var toiletDataPort: ToiletDataPort
     private lateinit var toiletRepository: ToiletRepository
     private lateinit var syncLogRepository: SyncLogRepository
-    private lateinit var service: ToiletSyncService
+    private lateinit var toiletSyncService: ToiletSyncService
 
     @BeforeEach
     fun setUp() {
+        toiletDataPort = mock()
         toiletRepository = mock()
         syncLogRepository = mock()
-        service = ToiletSyncService(toiletRepository, syncLogRepository)
-        whenever(toiletRepository.save(any())).thenAnswer { it.arguments[0] as ToiletEntity }
+        toiletSyncService = ToiletSyncService(toiletDataPort, toiletRepository, syncLogRepository)
         whenever(syncLogRepository.save(any())).thenAnswer { it.arguments[0] as SyncLogEntity }
+        whenever(toiletRepository.saveAll(any<List<ToiletEntity>>())).thenAnswer { it.arguments[0] as List<ToiletEntity> }
+        whenever(toiletRepository.findAllByAddressIn(any())).thenReturn(emptyList())
+    }
+
+    private fun makeResult(vararg addresses: String): ToiletFetchResult = ToiletFetchResult(
+        items = addresses.mapIndexed { i, addr ->
+            ExternalToiletData("화장실$i", addr, 37.0 + i, 127.0 + i)
+        },
+        parseFailCount = 0,
+    )
+
+    @Test
+    fun `syncAll - 3개 항목 가져와 3개 upsert, SyncLog 저장 확인`() {
+        val fetchResult = makeResult("주소1", "주소2", "주소3")
+        whenever(toiletDataPort.fetchAllToilets()).thenReturn(fetchResult)
+        whenever(toiletRepository.findAllByAddressIn(listOf("주소1", "주소2", "주소3"))).thenReturn(emptyList())
+
+        val result = toiletSyncService.syncAll()
+
+        assertThat(result.totalFetched).isEqualTo(3)
+        assertThat(result.upsertedCount).isEqualTo(3)
+        assertThat(result.failedCount).isEqualTo(0)
+        assertThat(result.status).isEqualTo(SyncStatus.SUCCESS)
+        verify(toiletRepository, times(1)).saveAll(any<List<ToiletEntity>>())
+        verify(syncLogRepository, times(1)).save(any())
     }
 
     @Test
-    fun `신규 화장실은 ACTIVE 상태로 저장된다`() {
-        val dto = SyncToiletDto("화장실A", "서울시 강남구", 37.1, 127.1, male = true, female = true, disabled = false)
-        whenever(toiletRepository.findByNameAndAddress("화장실A", "서울시 강남구")).thenReturn(null)
-        val result = service.syncPublicToilets(listOf(dto))
-        assertThat(result.created).isEqualTo(1)
-        assertThat(result.updated).isEqualTo(0)
-        assertThat(result.skipped).isEqualTo(0)
-        verify(toiletRepository, times(1)).save(any())
+    fun `syncAll - 빈 응답 시 upsertedCount=0, status=SUCCESS`() {
+        whenever(toiletDataPort.fetchAllToilets()).thenReturn(ToiletFetchResult(emptyList()))
+        whenever(toiletRepository.findAllByAddressIn(emptyList())).thenReturn(emptyList())
+
+        val result = toiletSyncService.syncAll()
+
+        assertThat(result.totalFetched).isEqualTo(0)
+        assertThat(result.upsertedCount).isEqualTo(0)
+        assertThat(result.failedCount).isEqualTo(0)
+        assertThat(result.status).isEqualTo(SyncStatus.SUCCESS)
+        verify(toiletRepository, times(1)).saveAll(any<List<ToiletEntity>>())
+        verify(syncLogRepository, times(1)).save(any())
     }
 
     @Test
-    fun `기존 화장실은 업데이트된다`() {
-        val existing = ToiletEntity(id = 1L, name = "화장실A", address = "서울시 강남구", lat = 37.0, lng = 127.0, status = ToiletStatus.ACTIVE)
-        val dto = SyncToiletDto("화장실A", "서울시 강남구", 37.1, 127.1, male = true, female = true, disabled = true)
-        whenever(toiletRepository.findByNameAndAddress("화장실A", "서울시 강남구")).thenReturn(existing)
-        val result = service.syncPublicToilets(listOf(dto))
-        assertThat(result.updated).isEqualTo(1)
-        assertThat(result.created).isEqualTo(0)
-        assertThat(existing.lat).isEqualTo(37.1)
-        assertThat(existing.disabled).isTrue()
-        verify(toiletRepository, times(1)).save(existing)
-    }
-
-    @Test
-    fun `lat이 0이면 건너뜀`() {
-        val dto = SyncToiletDto("화장실A", "서울시 강남구", 0.0, 127.1, male = true, female = true, disabled = false)
-        val result = service.syncPublicToilets(listOf(dto))
-        assertThat(result.skipped).isEqualTo(1)
-        assertThat(result.created).isEqualTo(0)
-        verify(toiletRepository, never()).save(any())
-    }
-
-    @Test
-    fun `lng이 0이면 건너뜀`() {
-        val dto = SyncToiletDto("화장실B", "서울시 강남구", 37.1, 0.0, male = true, female = true, disabled = false)
-        val result = service.syncPublicToilets(listOf(dto))
-        assertThat(result.skipped).isEqualTo(1)
-        assertThat(result.created).isEqualTo(0)
-        verify(toiletRepository, never()).save(any())
-    }
-
-    @Test
-    fun `혼합 목록 처리 - 신규 업데이트 건너뜀`() {
-        val dtos = listOf(
-            SyncToiletDto("신규화장실", "주소1", 37.1, 127.1, male = true, female = true, disabled = false),
-            SyncToiletDto("기존화장실", "주소2", 37.2, 127.2, male = true, female = true, disabled = false),
-            SyncToiletDto("좌표없음", "주소3", 0.0, 0.0, male = true, female = true, disabled = false),
+    fun `syncAll - 기존 화장실 주소가 일치하면 업데이트된다`() {
+        val existing = ToiletEntity(
+            id = 10L,
+            name = "구 이름",
+            address = "서울시 강남구 주소1",
+            lat = 37.0,
+            lng = 127.0,
+            status = ToiletStatus.ACTIVE,
         )
-        val existing = ToiletEntity(id = 2L, name = "기존화장실", address = "주소2", lat = 37.0, lng = 127.0, status = ToiletStatus.ACTIVE)
-        whenever(toiletRepository.findByNameAndAddress("신규화장실", "주소1")).thenReturn(null)
-        whenever(toiletRepository.findByNameAndAddress("기존화장실", "주소2")).thenReturn(existing)
-        val result = service.syncPublicToilets(dtos)
-        assertThat(result.created).isEqualTo(1)
-        assertThat(result.updated).isEqualTo(1)
-        assertThat(result.skipped).isEqualTo(1)
-        verify(toiletRepository, times(2)).save(any())
+        val fetchResult = ToiletFetchResult(
+            items = listOf(ExternalToiletData("새 이름", "서울시 강남구 주소1", 37.5, 127.5, male = true, female = false, disabled = true)),
+        )
+        whenever(toiletDataPort.fetchAllToilets()).thenReturn(fetchResult)
+        whenever(toiletRepository.findAllByAddressIn(listOf("서울시 강남구 주소1"))).thenReturn(listOf(existing))
+
+        val result = toiletSyncService.syncAll()
+
+        assertThat(result.upsertedCount).isEqualTo(1)
+        assertThat(result.status).isEqualTo(SyncStatus.SUCCESS)
+        assertThat(existing.name).isEqualTo("새 이름")
+        assertThat(existing.lat).isEqualTo(37.5)
+        assertThat(existing.disabled).isTrue()
+        assertThat(existing.isPublic).isTrue()
+        assertThat(existing.status).isEqualTo(ToiletStatus.ACTIVE)
     }
 
     @Test
-    fun `getLastSyncStatus - 동기화 기록이 있으면 반환`() {
-        val logEntry = SyncLogEntity(syncedAt = LocalDateTime.of(2026, 5, 18, 3, 0), createdCount = 10, updatedCount = 5, skippedCount = 2)
-        whenever(syncLogRepository.findTopByOrderBySyncedAtDesc()).thenReturn(logEntry)
-        val status = service.getLastSyncStatus()
-        assertThat(status).isNotNull
-        assertThat(status!!.createdCount).isEqualTo(10)
-        assertThat(status.updatedCount).isEqualTo(5)
-        assertThat(status.skippedCount).isEqualTo(2)
+    fun `syncAll - parseFailCount가 있으면 failedCount에 포함된다`() {
+        val fetchResult = ToiletFetchResult(
+            items = listOf(ExternalToiletData("화장실A", "주소1", 37.1, 127.1)),
+            parseFailCount = 2,
+        )
+        whenever(toiletDataPort.fetchAllToilets()).thenReturn(fetchResult)
+        whenever(toiletRepository.findAllByAddressIn(listOf("주소1"))).thenReturn(emptyList())
+
+        val result = toiletSyncService.syncAll()
+
+        // 1건 정상 + 2건 파싱실패 = totalFetched 3
+        assertThat(result.totalFetched).isEqualTo(3)
+        assertThat(result.upsertedCount).isEqualTo(1)
+        assertThat(result.failedCount).isEqualTo(2)
+        assertThat(result.status).isEqualTo(SyncStatus.PARTIAL)
     }
 
     @Test
-    fun `getLastSyncStatus - 동기화 기록이 없으면 null 반환`() {
-        whenever(syncLogRepository.findTopByOrderBySyncedAtDesc()).thenReturn(null)
-        val status = service.getLastSyncStatus()
-        assertThat(status).isNull()
+    fun `syncAll - API 호출 실패 시 FAILED 상태로 저장`() {
+        whenever(toiletDataPort.fetchAllToilets()).thenThrow(RuntimeException("API 연결 실패"))
+
+        val result = toiletSyncService.syncAll()
+
+        assertThat(result.status).isEqualTo(SyncStatus.FAILED)
+        assertThat(result.errorMessage).isNotNull()
+        verify(toiletRepository, never()).saveAll(any<List<ToiletEntity>>())
     }
 }
