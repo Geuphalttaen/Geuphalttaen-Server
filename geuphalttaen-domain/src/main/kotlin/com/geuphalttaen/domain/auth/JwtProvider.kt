@@ -2,17 +2,16 @@ package com.geuphalttaen.domain.auth
 
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.util.Date
 import javax.crypto.SecretKey
 
 @Component
 class JwtProvider(
-    @Value("\${jwt.secret}") private val secret: String,
+    private val jwtProperties: JwtProperties,
 ) {
     private val key: SecretKey by lazy {
-        Keys.hmacShaKeyFor(secret.toByteArray(Charsets.UTF_8))
+        Keys.hmacShaKeyFor(jwtProperties.secret.toByteArray(Charsets.UTF_8))
     }
 
     private val accessTokenExpiryMs = 60 * 60 * 1_000L          // 1 hour

@@ -1,7 +1,6 @@
 package com.geuphalttaen.infra.opendata
 
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 
@@ -12,14 +11,13 @@ import org.springframework.web.client.RestClient
  */
 @Component
 class PublicToiletApiClient(
-    @Value("\${opendata.toilet.api-key:}") private val apiKey: String,
-    @Value("\${opendata.toilet.base-url:https://api.odcloud.kr/api}") private val baseUrl: String,
+    private val opendataProperties: OpendataProperties,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
     private val restClient: RestClient by lazy {
         RestClient.builder()
-            .baseUrl(baseUrl)
+            .baseUrl(opendataProperties.baseUrl)
             .build()
     }
 

@@ -1,0 +1,68 @@
+package com.geuphalttaen.domain.auth
+
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+
+class JwtProviderTest {
+
+    private lateinit var jwtProvider: JwtProvider
+
+    // 테스트용 시크릿: 최소 32자 이상 (HMAC-SHA256 요구사항)
+    private val testSecret = "test-secret-key-must-be-at-least-32-characters-long-for-hmac"
+
+    @BeforeEach
+    fun setUp() {
+        val props = JwtProperties(secret = testSecret)
+        jwtProvider = JwtProvider(props)
+    }
+
+    @Test
+    fun `generateAccessToken - 유효한 JWT 토큰이 반환된다`() {
+        val userId = 42L
+
+        val token = jwtProvider.generateAccessToken(userId)
+
+        assertThat(token).isNotBlank()
+    }
+
+    @Test
+    fun `getUserId - 토큰에서 userId를 추출한다`() {
+        val userId = 42L
+        val token = jwtProvider.generateAccessToken(userId)
+
+        val extractedId = jwtProvider.getUserId(token)
+
+        assertThat(extractedId).isEqualTo(userId)
+    }
+
+    @Test
+    fun `isValid - 정상 토큰은 true를 반환한다`() {
+        val token = jwtProvider.generateAccessToken(1L)
+
+        assertThat(jwtProvider.isValid(token)).isTrue()
+    }
+
+    @Test
+    fun `isValid - 변조된 토큰은 false를 반환한다`() {
+        val token = jwtProvider.generateAccessToken(1L)
+        val tampered = token.dropLast(5) + "XXXXX"
+
+        assertThat(jwtProvider.isValid(tampered)).isFalse()
+    }
+
+    @Test
+    fun `isValid - 빈 문자열은 false를 반환한다`() {
+        assertThat(jwtProvider.isValid("")).isFalse()
+    }
+
+    @Test
+    fun `generateRefreshToken - 정상 토큰이 반환되고 userId를 추출할 수 있다`() {
+        val userId = 99L
+
+        val token = jwtProvider.generateRefreshToken(userId)
+
+        assertThat(jwtProvider.isValid(token)).isTrue()
+        assertThat(jwtProvider.getUserId(token)).isEqualTo(userId)
+    }
+}
