@@ -21,11 +21,28 @@ class ToiletSyncService(
      * 공공데이터 전체 화장실을 가져와 upsert 처리하고 SyncLogEntity를 저장 후 반환한다.
      * API 호출 실패 시 FAILED 상태의 SyncLogEntity를 저장하고 반환한다.
      */
+    fun getSyncLogs(n: Int = 10): List<SyncResultResponse> =
+        syncLogRepository.findTopNByOrderByCreatedAtDesc(n).map {
+            SyncResultResponse(
+                id = it.id,
+                status = it.status.name,
+                totalFetched = it.totalFetched,
+                upsertedCount = it.upsertedCount,
+                failedCount = it.failedCount,
+                syncedAt = it.createdAt,
+                errorMessage = it.errorMessage,
+            )
+        }
+
+    /**
+     * @Transactional 범위 내에서 API 장애 시 early-return 으로 FAILED 로그를 저장한다.
+     * RuntimeException catch 후 syncLogRepository.save() 는 같은 트랜잭션 내에서 실행되어 원자성이 보장된다.
+     */
     @Transactional
     fun syncAll(): SyncLogEntity {
         log.info("공공 화장실 데이터 동기화 시작")
 
-        // QA#3: API 호출 실패 시 FAILED 로그 저장
+        // API 호출 실패 시 FAILED 로그 저장 후 early-return
         val fetchResult = try {
             toiletDataPort.fetchAllToilets()
         } catch (e: RuntimeException) {
