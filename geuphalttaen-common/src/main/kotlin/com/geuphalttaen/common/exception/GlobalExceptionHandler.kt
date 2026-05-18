@@ -13,10 +13,10 @@ class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException::class)
     fun handleBusinessException(e: BusinessException): ResponseEntity<ApiResponse<Nothing>> {
-        log.warn("BusinessException: code={}, message={}", e.errorCode.name, e.message)
+        log.warn("BusinessException: code={}, message={}", e.errorCode.code, e.message)
         return ResponseEntity
             .status(e.errorCode.status)
-            .body(ApiResponse.error(e.errorCode.name, e.message ?: e.errorCode.message))
+            .body(ApiResponse.error(e.errorCode.code, e.message ?: e.errorCode.message))
     }
 
     @ExceptionHandler(Exception::class)
@@ -25,6 +25,6 @@ class GlobalExceptionHandler {
         val errorCode = ErrorCode.INTERNAL_SERVER_ERROR
         return ResponseEntity
             .status(errorCode.status)
-            .body(ApiResponse.error(errorCode.name, errorCode.message))
+            .body(ApiResponse.error(errorCode.code, errorCode.message))
     }
 }

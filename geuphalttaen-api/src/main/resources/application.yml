@@ -25,6 +25,11 @@ spring:
 jwt:
   secret: ${JWT_SECRET:change-me-this-is-a-very-long-secret-key-for-dev-only}
 
+kakao:
+  oauth:
+    client-id: ${KAKAO_CLIENT_ID:}
+    client-secret: ${KAKAO_CLIENT_SECRET:}
+
 opendata:
   toilet:
     api-key: ${OPENDATA_TOILET_API_KEY:}
