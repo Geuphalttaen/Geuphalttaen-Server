@@ -19,4 +19,7 @@ enum class ErrorCode(
     // 인증 토큰 에러
     INVALID_TOKEN("A001", HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
     TOKEN_NOT_FOUND("A002", HttpStatus.UNAUTHORIZED, "토큰을 찾을 수 없습니다."),
+
+    // 화장실 에러
+    TOILET_NOT_FOUND("T001", HttpStatus.NOT_FOUND, "화장실 정보를 찾을 수 없습니다."),
 }

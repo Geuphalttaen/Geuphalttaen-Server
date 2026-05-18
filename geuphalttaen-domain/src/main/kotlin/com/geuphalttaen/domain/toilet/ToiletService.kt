@@ -1,5 +1,7 @@
 package com.geuphalttaen.domain.toilet
 
+import com.geuphalttaen.common.exception.BusinessException
+import com.geuphalttaen.common.exception.ErrorCode
 import com.geuphalttaen.core.entity.ToiletEntity
 import com.geuphalttaen.core.entity.ToiletStatus
 import org.springframework.stereotype.Service
@@ -14,6 +16,11 @@ class ToiletService(
         return entities.map { it.toResponse(request.lat, request.lng) }
     }
 
+    fun getById(id: Long): ToiletResponse {
+        val entity = toiletRepository.findById(id) ?: throw BusinessException(ErrorCode.TOILET_NOT_FOUND)
+        return entity.toResponse(entity.lat, entity.lng)
+    }
+
     fun report(userId: Long, request: ToiletReportRequest): ToiletResponse {
         val entity = ToiletEntity(
             name = request.name,
@@ -24,6 +31,7 @@ class ToiletService(
             male = request.male,
             female = request.female,
             disabled = request.disabled,
+            familyRoom = request.familyRoom,
             reportedBy = userId,
             status = ToiletStatus.PENDING,
         )
@@ -42,6 +50,7 @@ class ToiletService(
             male = male,
             female = female,
             disabled = disabled,
+            familyRoom = familyRoom,
         )
 
     private fun haversineMeters(lat1: Double, lng1: Double, lat2: Double, lng2: Double): Double {

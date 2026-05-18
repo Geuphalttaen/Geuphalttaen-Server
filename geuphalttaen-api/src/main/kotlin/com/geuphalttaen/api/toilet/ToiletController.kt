@@ -26,6 +26,12 @@ class ToiletController(
         return ApiResponse.ok(results)
     }
 
+    @Operation(summary = "화장실 상세 조회")
+    @GetMapping("/{id}")
+    fun getById(@PathVariable id: Long): ApiResponse<ToiletResponse> {
+        return ApiResponse.ok(toiletService.getById(id))
+    }
+
     @Operation(summary = "화장실 제보 (인증 필요)")
     @PostMapping("/report")
     fun report(

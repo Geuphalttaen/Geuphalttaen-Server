@@ -16,6 +16,7 @@ data class ToiletResponse(
     val male: Boolean,
     val female: Boolean,
     val disabled: Boolean,
+    val familyRoom: Boolean,
 )
 
 data class ToiletReportRequest(
@@ -27,4 +28,5 @@ data class ToiletReportRequest(
     val male: Boolean = true,
     val female: Boolean = true,
     val disabled: Boolean = false,
+    val familyRoom: Boolean = false,
 )
