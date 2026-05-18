@@ -1,0 +1,38 @@
+package com.geuphalttaen.api.toilet
+
+import com.geuphalttaen.common.response.ApiResponse
+import com.geuphalttaen.domain.toilet.ToiletReportRequest
+import com.geuphalttaen.domain.toilet.ToiletResponse
+import com.geuphalttaen.domain.toilet.ToiletSearchRequest
+import com.geuphalttaen.domain.toilet.ToiletService
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.validation.Valid
+import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.*
+
+@Tag(name = "Toilet", description = "공중화장실 API")
+@RestController
+@RequestMapping("/api/v1/toilets")
+class ToiletController(
+    private val toiletService: ToiletService,
+) {
+    @Operation(summary = "근처 화장실 검색 (인증 불필요)")
+    @GetMapping
+    fun searchNearby(
+        @Valid @ModelAttribute request: ToiletSearchRequest,
+    ): ApiResponse<List<ToiletResponse>> {
+        val results = toiletService.searchNearby(request)
+        return ApiResponse.ok(results)
+    }
+
+    @Operation(summary = "화장실 제보 (인증 필요)")
+    @PostMapping("/report")
+    fun report(
+        @AuthenticationPrincipal userId: Long,
+        @Valid @RequestBody request: ToiletReportRequest,
+    ): ApiResponse<ToiletResponse> {
+        val result = toiletService.report(userId, request)
+        return ApiResponse.ok(result)
+    }
+}

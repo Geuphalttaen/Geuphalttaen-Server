@@ -39,5 +39,18 @@ out/
 ### Kotlin ###
 .kotlin
 
+### Mac ###
+.DS_Store
+
 ### Environment ###
 .env
+.env.local
+.env.*.local
+
+### Logs ###
+*.log
+logs/
+
+### QueryDSL generated sources ###
+**/generated/
+**/generated-sources/
