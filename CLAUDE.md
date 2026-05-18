@@ -8,7 +8,7 @@ Kotlin 2.1.0 + Spring Boot 3.4.5 + Gradle 9.3.1 멀티모듈 프로젝트.
 
 ```
 geuphalttaen-common   — ApiResponse 봉투, ErrorCode, BusinessException, GlobalExceptionHandler
-geuphalttaen-core     — JPA 엔티티(UserEntity, ToiletEntity), Flyway 마이그레이션, QueryDSL
+geuphalttaen-core     — JPA 엔티티(UserEntity, ToiletEntity), QueryDSL
 geuphalttaen-domain   — 도메인 서비스(ToiletService, AuthService), DTO, JwtProvider
 geuphalttaen-infra    — 외부 연동 (공공데이터 API 클라이언트, ToiletRepositoryImpl)
 geuphalttaen-api      — REST 컨트롤러, Spring Security, Swagger, main (bootJar)
@@ -19,11 +19,16 @@ geuphalttaen-api      — REST 컨트롤러, Spring Security, Swagger, main (boo
 ## 주요 기술 스택
 
 - Java 21
-- MySQL 8 + Redis 7
-- Flyway (마이그레이션: `geuphalttaen-core/src/main/resources/db/migration/`)
+- MySQL 8 + Redis 7 (ddl-auto=update, 프로덕션은 수동 DDL)
 - QueryDSL 5.1.0 (kapt 코드 생성)
 - Spring Security + JWT (jjwt 0.12.x)
 - springdoc-openapi 2.8.x (Swagger UI: `/swagger-ui.html`)
+
+## Git Convention
+
+- 브랜치: `feature/{기능}` / `fix/{버그}` / `refactor/{기능}` / `chore/{작업}`
+- 커밋: `feat` / `fix` / `refactor` / `style` / `test` / `docs` / `chore`
+- 흐름: feature → develop (PR) → main (릴리즈)
 
 ## 로컬 개발 환경
 
