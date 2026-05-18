@@ -19,3 +19,8 @@ opendata:
   toilet:
     api-key: ""
     base-url: "https://api.odcloud.kr/api"
+
+kakao:
+  oauth:
+    client-id: test-client-id
+    client-secret: test-client-secret

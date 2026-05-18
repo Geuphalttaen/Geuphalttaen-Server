@@ -12,11 +12,12 @@ data class ToiletResponse(
     val address: String,
     val lat: Double,
     val lng: Double,
-    val distanceMeters: Double,
+    val distanceMeters: Double?,
     val male: Boolean,
     val female: Boolean,
     val disabled: Boolean,
     val familyRoom: Boolean,
+    val isPublic: Boolean,
 )
 
 data class ToiletReportRequest(

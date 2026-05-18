@@ -27,6 +27,7 @@ class ToiletController(
     }
 
     @Operation(summary = "화장실 상세 조회")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "화장실을 찾을 수 없음")
     @GetMapping("/{id}")
     fun getById(@PathVariable id: Long): ApiResponse<ToiletResponse> {
         return ApiResponse.ok(toiletService.getById(id))

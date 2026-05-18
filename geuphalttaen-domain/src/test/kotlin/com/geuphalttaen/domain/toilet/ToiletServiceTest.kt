@@ -75,7 +75,7 @@ class ToiletServiceTest {
         assertThat(result.id).isEqualTo(42L)
         assertThat(result.name).isEqualTo("테스트 화장실")
         assertThat(result.familyRoom).isTrue()
-        assertThat(result.distanceMeters).isEqualTo(0.0)
+        assertThat(result.distanceMeters).isNull()
     }
 
     @Test
