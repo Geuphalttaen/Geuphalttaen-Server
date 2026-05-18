@@ -94,7 +94,8 @@ Swagger UI: http://localhost:8080/swagger-ui.html
     → /backend시작
       ├── PR 생성 즉시: reviewer 에이전트 + QA 에이전트 병렬 실행
       │     → gh pr comment <PR번호> --body "<리뷰 결과>"
-      │     → 블로커/개선권고 수정 재커밋 시에도 즉시 재실행
+      │     → 블로커([B]) AND 개선권고([I]) 모두 즉시 반영 후 재커밋 push
+      │     → reviewer + QA 즉시 재실행 (병렬)
       │     → 블로커 0건 + QA GATE 4 통과 → 유저에게 머지 요청
       └── GATE 3 (DB 스키마 변경 검증)
         → /qa시작
@@ -108,7 +109,7 @@ Swagger UI: http://localhost:8080/swagger-ui.html
 | GATE 2 (설계→구현) | 설계 산출물 완성, API 스펙 합의 | "설계 승인" 또는 "구현 시작해" |
 | GATE 3 (DB 스키마) | ddl-auto=update 리스크 검토, 엔티티 변경 범위 명시 | "DB 승인" 또는 자동 통과 |
 | GATE 4 (QA→완료) | Critical/High 버그 0건 | QA 에이전트 자동 판단 |
-| **PR 리뷰 게이트** | 모든 PR에 reviewer 에이전트 리뷰 코멘트 1회 이상, 블로커 0건 | 유저가 머지 버튼 |
+| **PR 리뷰 게이트** | 모든 PR에 reviewer 에이전트 리뷰 코멘트 1회 이상, 블로커 0건 + **개선권고 전항목 반영** | 유저가 머지 버튼 |
 
 ## 에이전트 구성
 
