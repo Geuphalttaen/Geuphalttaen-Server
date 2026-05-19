@@ -1,5 +1,7 @@
 package com.geuphalttaen.domain.toilet
 
+import com.geuphalttaen.common.exception.BusinessException
+import com.geuphalttaen.common.exception.ErrorCode
 import com.geuphalttaen.core.entity.ToiletEntity
 import com.geuphalttaen.core.entity.ToiletStatus
 import org.springframework.stereotype.Service
@@ -14,6 +16,11 @@ class ToiletService(
         return entities.map { it.toResponse(request.lat, request.lng) }
     }
 
+    fun getById(id: Long): ToiletResponse {
+        val entity = toiletRepository.findById(id) ?: throw BusinessException(ErrorCode.TOILET_NOT_FOUND)
+        return entity.toResponse()
+    }
+
     fun report(userId: Long, request: ToiletReportRequest): ToiletResponse {
         val entity = ToiletEntity(
             name = request.name,
@@ -24,6 +31,7 @@ class ToiletService(
             male = request.male,
             female = request.female,
             disabled = request.disabled,
+            familyRoom = request.familyRoom,
             reportedBy = userId,
             status = ToiletStatus.PENDING,
         )
@@ -31,17 +39,19 @@ class ToiletService(
         return saved.toResponse(request.lat, request.lng)
     }
 
-    private fun ToiletEntity.toResponse(fromLat: Double, fromLng: Double): ToiletResponse =
+    private fun ToiletEntity.toResponse(fromLat: Double? = null, fromLng: Double? = null): ToiletResponse =
         ToiletResponse(
             id = id,
             name = name,
             address = address,
             lat = lat,
             lng = lng,
-            distanceMeters = haversineMeters(fromLat, fromLng, lat, lng),
+            distanceMeters = if (fromLat != null && fromLng != null) haversineMeters(fromLat, fromLng, lat, lng) else null,
             male = male,
             female = female,
             disabled = disabled,
+            familyRoom = familyRoom,
+            isPublic = isPublic,
         )
 
     private fun haversineMeters(lat1: Double, lng1: Double, lat2: Double, lng2: Double): Double {

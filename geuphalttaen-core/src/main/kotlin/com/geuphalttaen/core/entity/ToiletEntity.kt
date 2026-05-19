@@ -40,6 +40,9 @@ class ToiletEntity(
     @Column(nullable = false)
     var disabled: Boolean = false,
 
+    @Column(name = "family_room", nullable = false)
+    var familyRoom: Boolean = false,
+
     @Column(name = "reported_by")
     var reportedBy: Long? = null,
 

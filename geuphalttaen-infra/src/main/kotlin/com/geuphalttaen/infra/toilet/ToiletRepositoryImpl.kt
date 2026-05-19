@@ -4,6 +4,7 @@ import com.geuphalttaen.core.entity.QToiletEntity
 import com.geuphalttaen.core.entity.ToiletEntity
 import com.geuphalttaen.core.entity.ToiletStatus
 import com.geuphalttaen.domain.toilet.ToiletRepository
+import com.querydsl.core.types.dsl.Expressions
 import com.querydsl.jpa.impl.JPAQueryFactory
 import jakarta.persistence.EntityManager
 import org.springframework.stereotype.Repository
@@ -24,8 +25,8 @@ class ToiletRepositoryImpl(
         val toilet = QToiletEntity.toiletEntity
 
         // ST_Distance_Sphere returns distance in meters
-        val distanceExpr = com.querydsl.core.types.dsl.Expressions.numberTemplate(
-            Double::class.java,
+        val distanceExpr = Expressions.numberTemplate(
+            java.lang.Double::class.java,
             "ST_Distance_Sphere(POINT({0}, {1}), POINT({2}, {3}))",
             lng, lat, toilet.lng, toilet.lat,
         )
@@ -39,6 +40,8 @@ class ToiletRepositoryImpl(
             .orderBy(distanceExpr.asc())
             .fetch()
     }
+
+    override fun findById(id: Long): ToiletEntity? = jpaRepository.findById(id).orElse(null)
 
     override fun save(entity: ToiletEntity): ToiletEntity = jpaRepository.save(entity)
 }
