@@ -17,9 +17,9 @@ class JwtProvider(
     private val accessTokenExpiryMs = 60 * 60 * 1_000L          // 1 hour
     private val refreshTokenExpiryMs = 14 * 24 * 60 * 60 * 1_000L // 14 days
 
-    fun generateAccessToken(userId: Long): String = buildToken(userId, accessTokenExpiryMs)
+    fun generateAccessToken(userId: Long): String = buildToken(userId, accessTokenExpiryMs, "ACCESS")
 
-    fun generateRefreshToken(userId: Long): String = buildToken(userId, refreshTokenExpiryMs)
+    fun generateRefreshToken(userId: Long): String = buildToken(userId, refreshTokenExpiryMs, "REFRESH")
 
     fun getUserId(token: String): Long {
         val claims = Jwts.parser()
@@ -32,12 +32,17 @@ class JwtProvider(
 
     fun isValid(token: String): Boolean = runCatching { getUserId(token) }.isSuccess
 
-    private fun buildToken(userId: Long, expiryMs: Long): String {
+    fun getTokenType(token: String): String? = runCatching {
+        Jwts.parser().verifyWith(key).build().parseSignedClaims(token).payload["type"] as? String
+    }.getOrNull()
+
+    private fun buildToken(userId: Long, expiryMs: Long, type: String): String {
         val now = Date()
         return Jwts.builder()
             .subject(userId.toString())
             .issuedAt(now)
             .expiration(Date(now.time + expiryMs))
+            .claim("type", type)
             .signWith(key)
             .compact()
     }

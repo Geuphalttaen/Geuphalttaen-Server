@@ -70,6 +70,25 @@ class JwtProviderTest {
     }
 
     @Test
+    fun `getTokenType - Access Token은 ACCESS 타입을 반환한다`() {
+        val token = jwtProvider.generateAccessToken(1L)
+
+        assertThat(jwtProvider.getTokenType(token)).isEqualTo("ACCESS")
+    }
+
+    @Test
+    fun `getTokenType - Refresh Token은 REFRESH 타입을 반환한다`() {
+        val token = jwtProvider.generateRefreshToken(1L)
+
+        assertThat(jwtProvider.getTokenType(token)).isEqualTo("REFRESH")
+    }
+
+    @Test
+    fun `getTokenType - 잘못된 토큰은 null을 반환한다`() {
+        assertThat(jwtProvider.getTokenType("invalid.token")).isNull()
+    }
+
+    @Test
     fun `isValid - 만료된 토큰이면 false를 반환한다`() {
         // 이미 만료된 시각으로 expiration을 설정하여 만료 토큰 생성
         val key = Keys.hmacShaKeyFor(testSecret.toByteArray(Charsets.UTF_8))

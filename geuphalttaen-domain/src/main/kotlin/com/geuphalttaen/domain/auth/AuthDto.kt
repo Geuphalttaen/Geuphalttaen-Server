@@ -1,13 +1,17 @@
 package com.geuphalttaen.domain.auth
 
-import com.geuphalttaen.core.entity.OAuthProvider
+import jakarta.validation.constraints.NotBlank
 
 data class OAuthLoginRequest(
-    val provider: OAuthProvider,
-    val accessToken: String,
+    @field:NotBlank val provider: String,
+    @field:NotBlank val accessToken: String,
 )
 
 data class TokenResponse(
     val accessToken: String,
     val refreshToken: String,
+)
+
+data class RefreshRequest(
+    @field:NotBlank val refreshToken: String,
 )
