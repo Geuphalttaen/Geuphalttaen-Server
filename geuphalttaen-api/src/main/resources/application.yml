@@ -2,12 +2,12 @@ spring:
   application:
     name: geuphalttaen
 
-  config:
-    import:
-      - classpath:config/db.yml
-      - classpath:config/redis.yml
-      - classpath:config/jwt.yml
-      - classpath:config/opendata.yml
+  profiles:
+    include:
+      - db
+      - redis
+      - jwt
+      - opendata
 
   task:
     scheduling:
