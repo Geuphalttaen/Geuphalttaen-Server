@@ -1,0 +1,4 @@
+opendata:
+  toilet:
+    api-key: ${OPENDATA_TOILET_API_KEY:}
+    page-size: 1000
