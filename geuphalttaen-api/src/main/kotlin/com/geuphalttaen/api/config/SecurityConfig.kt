@@ -1,5 +1,7 @@
 package com.geuphalttaen.api.config
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.geuphalttaen.common.response.ApiResponse
 import com.geuphalttaen.domain.auth.JwtProvider
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
@@ -22,6 +24,7 @@ import org.springframework.web.filter.OncePerRequestFilter
 @EnableMethodSecurity
 class SecurityConfig(
     private val jwtProvider: JwtProvider,
+    private val objectMapper: ObjectMapper,
 ) {
     @Bean
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
@@ -33,7 +36,11 @@ class SecurityConfig(
                 ex.authenticationEntryPoint { _, response, _ ->
                     response.status = HttpStatus.UNAUTHORIZED.value()
                     response.contentType = "application/json;charset=UTF-8"
-                    response.writer.write("""{"success":false,"error":{"code":"UNAUTHORIZED","message":"인증이 필요합니다"}}""")
+                    response.writer.write(
+                        objectMapper.writeValueAsString(
+                            ApiResponse.error<Nothing>("UNAUTHORIZED", "인증이 필요합니다")
+                        )
+                    )
                 }
             }
             .authorizeHttpRequests { auth ->

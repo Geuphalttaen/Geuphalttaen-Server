@@ -2,17 +2,18 @@
 """공중화장실 CSV → toilets 테이블 bulk import"""
 
 import csv
+import os
 import sys
 import mysql.connector
 
-CSV_PATH = "/Users/kwkang/Downloads/공중 화장실 정보.csv"
+CSV_PATH = os.environ.get("CSV_PATH", "공중 화장실 정보.csv")
 
 DB = dict(
-    host="127.0.0.1",
-    port=3306,
-    user="root",
-    password="@ruddnjs9215",
-    database="geuphalttaen",
+    host=os.environ.get("DB_HOST", "127.0.0.1"),
+    port=int(os.environ.get("DB_PORT", "3306")),
+    user=os.environ.get("DB_USER", "root"),
+    password=os.environ["DB_PASSWORD"],
+    database=os.environ.get("DB_NAME", "geuphalttaen"),
     charset="utf8mb4",
 )
 

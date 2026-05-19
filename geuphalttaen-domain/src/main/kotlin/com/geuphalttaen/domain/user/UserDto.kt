@@ -1,7 +1,8 @@
 package com.geuphalttaen.domain.user
 
+import com.geuphalttaen.core.entity.ToiletStatus
+
 data class UserProfileResponse(
-    val id: Long,
     val nickname: String,
     val provider: String,
     val reportCount: Int,
@@ -14,6 +15,6 @@ data class MyReportResponse(
     val address: String,
     val lat: Double,
     val lng: Double,
-    val status: String,
+    val status: ToiletStatus,
     val createdAt: String,
 )
