@@ -2,6 +2,7 @@ package com.geuphalttaen.infra
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.autoconfigure.domain.EntityScan
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 
@@ -15,4 +16,5 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 @EnableJpaAuditing
 @EntityScan(basePackages = ["com.geuphalttaen.core.entity"])
 @EnableJpaRepositories(basePackages = ["com.geuphalttaen.infra"])
+@EnableConfigurationProperties
 class InfraTestApplication
