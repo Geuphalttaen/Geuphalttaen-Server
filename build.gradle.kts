@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.gradle.api.tasks.compile.JavaCompile
 
 plugins {
     kotlin("jvm") version "2.1.0" apply false
@@ -36,6 +37,11 @@ subprojects {
         implementation("org.jetbrains.kotlin:kotlin-reflect")
         testImplementation("org.springframework.boot:spring-boot-starter-test")
         testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    }
+
+    tasks.withType<JavaCompile> {
+        sourceCompatibility = "21"
+        targetCompatibility = "21"
     }
 
     tasks.withType<KotlinCompile> {
