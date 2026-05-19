@@ -1,0 +1,3 @@
+kakao:
+  maps:
+    rest-key: ${KAKAO_MAPS_REST_KEY}

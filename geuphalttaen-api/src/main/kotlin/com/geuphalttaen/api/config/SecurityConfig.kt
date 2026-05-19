@@ -1,5 +1,7 @@
 package com.geuphalttaen.api.config
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.geuphalttaen.common.response.ApiResponse
 import com.geuphalttaen.domain.auth.JwtProvider
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
@@ -7,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
+import org.springframework.http.HttpStatus
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
@@ -21,16 +24,31 @@ import org.springframework.web.filter.OncePerRequestFilter
 @EnableMethodSecurity
 class SecurityConfig(
     private val jwtProvider: JwtProvider,
+    private val objectMapper: ObjectMapper,
 ) {
     @Bean
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
         http
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
+            .exceptionHandling { ex ->
+                // 미인증 요청 → 401 (기본값 403 방지)
+                ex.authenticationEntryPoint { _, response, _ ->
+                    response.status = HttpStatus.UNAUTHORIZED.value()
+                    response.contentType = "application/json;charset=UTF-8"
+                    response.writer.write(
+                        objectMapper.writeValueAsString(
+                            ApiResponse.error<Nothing>("UNAUTHORIZED", "인증이 필요합니다")
+                        )
+                    )
+                }
+            }
             .authorizeHttpRequests { auth ->
                 auth
                     .requestMatchers(HttpMethod.GET, "/api/v1/toilets").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/toilets/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/directions").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/geocode/**").permitAll()
                     .requestMatchers("/api/v1/auth/**").permitAll()
                     // B1: JwtAuthentication.getAuthorities() 가 emptyList() 이므로 hasRole("ADMIN") 은 항상 403.
                     //     권한 관리는 Issue #5 에서 처리하며, 현재는 인증된 사용자면 접근 허용.

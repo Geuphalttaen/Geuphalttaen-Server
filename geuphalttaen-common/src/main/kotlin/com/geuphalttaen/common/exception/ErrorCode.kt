@@ -22,4 +22,10 @@ enum class ErrorCode(
 
     // 화장실 에러
     TOILET_NOT_FOUND("T001", HttpStatus.NOT_FOUND, "화장실 정보를 찾을 수 없습니다."),
+
+    // 사용자 에러
+    USER_NOT_FOUND("U001", HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),
+
+    // 경로 에러
+    ROUTE_NOT_FOUND("R001", HttpStatus.UNPROCESSABLE_ENTITY, "경로를 찾을 수 없습니다."),
 }
