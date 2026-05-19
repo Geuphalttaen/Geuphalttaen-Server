@@ -1,5 +1,6 @@
 plugins {
     kotlin("plugin.spring")
+    kotlin("kapt")
 }
 
 tasks.findByName("bootJar")?.enabled = false
@@ -10,6 +11,9 @@ dependencies {
     implementation(project(":geuphalttaen-core"))
 
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    kapt("org.springframework.boot:spring-boot-configuration-processor")
+
+
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-validation")
 

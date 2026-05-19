@@ -2,6 +2,7 @@ package com.geuphalttaen.infra.user
 
 import com.geuphalttaen.core.entity.OAuthProvider
 import com.geuphalttaen.core.entity.UserEntity
+import com.geuphalttaen.domain.auth.UserRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -39,7 +40,7 @@ class UserRepositoryImplTest {
     }
 
     @Autowired
-    private lateinit var userRepository: UserRepositoryImpl
+    private lateinit var userRepository: UserRepository
 
     @Test
     fun `save - UserEntity를 저장하면 id가 부여된다`() {
