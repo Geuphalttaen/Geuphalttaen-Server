@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletResponse
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
@@ -17,6 +18,7 @@ import org.springframework.web.filter.OncePerRequestFilter
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 class SecurityConfig(
     private val jwtProvider: JwtProvider,
 ) {
@@ -28,7 +30,11 @@ class SecurityConfig(
             .authorizeHttpRequests { auth ->
                 auth
                     .requestMatchers(HttpMethod.GET, "/api/v1/toilets").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/toilets/**").permitAll()
                     .requestMatchers("/api/v1/auth/**").permitAll()
+                    // B1: JwtAuthentication.getAuthorities() 가 emptyList() 이므로 hasRole("ADMIN") 은 항상 403.
+                    //     권한 관리는 Issue #5 에서 처리하며, 현재는 인증된 사용자면 접근 허용.
+                    .requestMatchers("/api/v1/admin/**").authenticated()
                     .requestMatchers(
                         "/actuator/health",
                         "/v3/api-docs/**",

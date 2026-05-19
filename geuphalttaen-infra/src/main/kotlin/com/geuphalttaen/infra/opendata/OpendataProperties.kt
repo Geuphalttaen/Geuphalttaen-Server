@@ -6,4 +6,5 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 data class OpendataProperties(
     val apiKey: String = "",
     val baseUrl: String = "https://api.odcloud.kr/api",
+    val pageSize: Int = 1000,
 )
