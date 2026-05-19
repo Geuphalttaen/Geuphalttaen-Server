@@ -1,5 +1,6 @@
 plugins {
     kotlin("plugin.spring")
+    kotlin("kapt")
 }
 
 tasks.findByName("bootJar")?.enabled = false
@@ -9,7 +10,10 @@ dependencies {
     implementation(project(":geuphalttaen-common"))
     implementation(project(":geuphalttaen-core"))
 
+    kapt("org.springframework.boot:spring-boot-configuration-processor")
+
     implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
 
     // jjwt
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
