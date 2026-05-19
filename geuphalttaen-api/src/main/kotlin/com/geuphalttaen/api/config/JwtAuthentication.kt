@@ -12,7 +12,7 @@ class JwtAuthentication(
     override fun getAuthorities(): Collection<GrantedAuthority> = emptyList()
     override fun getCredentials(): Any? = null
     override fun getDetails(): Any? = null
-    override fun getPrincipal(): Any = userId
+    override fun getPrincipal(): Long = userId
     override fun isAuthenticated(): Boolean = authenticated
     override fun setAuthenticated(isAuthenticated: Boolean) {
         authenticated = isAuthenticated
