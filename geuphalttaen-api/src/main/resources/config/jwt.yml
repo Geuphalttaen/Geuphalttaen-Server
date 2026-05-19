@@ -1,0 +1,2 @@
+jwt:
+  secret: ${JWT_SECRET:change-me-this-is-a-very-long-secret-key-for-dev-only}

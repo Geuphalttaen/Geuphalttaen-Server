@@ -2,33 +2,17 @@ spring:
   application:
     name: geuphalttaen
 
-  datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/geuphalttaen?characterEncoding=UTF-8&serverTimezone=Asia/Seoul}
-    username: ${DB_USERNAME:geuphalttaen}
-    password: ${DB_PASSWORD:}
-    driver-class-name: com.mysql.cj.jdbc.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
-        format_sql: false
-    open-in-view: false
+  config:
+    import:
+      - classpath:config/db.yml
+      - classpath:config/redis.yml
+      - classpath:config/jwt.yml
+      - classpath:config/opendata.yml
 
   task:
     scheduling:
       pool:
         size: 2
-
-jwt:
-  secret: ${JWT_SECRET:change-me-this-is-a-very-long-secret-key-for-dev-only}
-
-opendata:
-  toilet:
-    api-key: ${OPENDATA_TOILET_API_KEY:}
-    page-size: 1000
 
 springdoc:
   swagger-ui:
