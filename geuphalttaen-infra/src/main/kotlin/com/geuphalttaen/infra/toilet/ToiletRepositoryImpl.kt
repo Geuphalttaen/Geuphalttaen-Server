@@ -48,6 +48,9 @@ class ToiletRepositoryImpl(
     override fun findAllByAddressIn(addresses: List<String>): List<ToiletEntity> =
         jpaRepository.findAllByAddressIn(addresses)
 
+    override fun findByReportedBy(reportedBy: Long): List<ToiletEntity> =
+        jpaRepository.findByReportedBy(reportedBy)
+
     override fun save(entity: ToiletEntity): ToiletEntity = jpaRepository.save(entity)
 
     override fun saveAll(entities: List<ToiletEntity>): List<ToiletEntity> = jpaRepository.saveAll(entities)

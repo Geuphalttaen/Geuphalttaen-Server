@@ -15,5 +15,7 @@ class UserRepositoryImpl(
         return jpaRepository.findByProviderAndProviderId(oAuthProvider, providerId)
     }
 
+    override fun findById(id: Long): UserEntity? = jpaRepository.findById(id).orElse(null)
+
     override fun save(entity: UserEntity): UserEntity = jpaRepository.save(entity)
 }

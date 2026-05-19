@@ -1,0 +1,45 @@
+package com.geuphalttaen.domain.user
+
+import com.geuphalttaen.common.exception.BusinessException
+import com.geuphalttaen.common.exception.ErrorCode
+import com.geuphalttaen.core.entity.ToiletStatus
+import com.geuphalttaen.domain.auth.UserRepository
+import com.geuphalttaen.domain.toilet.ToiletRepository
+import org.springframework.stereotype.Service
+import java.time.format.DateTimeFormatter
+
+@Service
+class UserService(
+    private val userRepository: UserRepository,
+    private val toiletRepository: ToiletRepository,
+) {
+    private val formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd")
+
+    fun getProfile(userId: Long): UserProfileResponse {
+        val user = userRepository.findById(userId) ?: throw BusinessException(ErrorCode.USER_NOT_FOUND)
+        val reports = toiletRepository.findByReportedBy(userId)
+        val postedCount = reports.count { it.status == ToiletStatus.ACTIVE }
+        return UserProfileResponse(
+            id = user.id,
+            nickname = user.nickname,
+            provider = user.provider.name,
+            reportCount = reports.size,
+            postedCount = postedCount,
+        )
+    }
+
+    fun getMyReports(userId: Long): List<MyReportResponse> {
+        val reports = toiletRepository.findByReportedBy(userId)
+        return reports.sortedByDescending { it.createdAt }.map { toilet ->
+            MyReportResponse(
+                id = toilet.id,
+                name = toilet.name,
+                address = toilet.address,
+                lat = toilet.lat,
+                lng = toilet.lng,
+                status = toilet.status.name,
+                createdAt = toilet.createdAt.format(formatter),
+            )
+        }
+    }
+}
