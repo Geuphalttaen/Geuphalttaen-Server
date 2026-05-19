@@ -1,0 +1,4 @@
+ncp:
+  maps:
+    client-id: ${NCP_CLIENT_ID:22nnimjo7y}
+    client-secret: ${NCP_CLIENT_SECRET:U6fnkNEoEfqoQpwYhVFv7IV6qpZPctbe9N4xw4PZ}

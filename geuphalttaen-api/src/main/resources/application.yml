@@ -8,6 +8,8 @@ spring:
       - redis
       - jwt
       - opendata
+      - ncp
+      - kakao
 
   task:
     scheduling:

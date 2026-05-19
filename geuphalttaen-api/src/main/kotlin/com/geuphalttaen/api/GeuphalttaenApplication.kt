@@ -1,6 +1,8 @@
 package com.geuphalttaen.api
 
 import com.geuphalttaen.domain.auth.JwtProperties
+import com.geuphalttaen.infra.ncp.NcpProperties
+import com.geuphalttaen.infra.kakao.KakaoMapsProperties
 import com.geuphalttaen.infra.oauth.KakaoProperties
 import com.geuphalttaen.infra.opendata.OpendataProperties
 import org.springframework.boot.autoconfigure.SpringBootApplication
@@ -20,7 +22,7 @@ import org.springframework.scheduling.annotation.EnableScheduling
 @EntityScan(basePackages = ["com.geuphalttaen"])
 @EnableScheduling
 @EnableAsync
-@EnableConfigurationProperties(JwtProperties::class, OpendataProperties::class, KakaoProperties::class)
+@EnableConfigurationProperties(JwtProperties::class, OpendataProperties::class, KakaoProperties::class, NcpProperties::class, KakaoMapsProperties::class)
 class GeuphalttaenApplication
 
 fun main(args: Array<String>) {
