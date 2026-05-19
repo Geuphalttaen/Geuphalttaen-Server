@@ -19,8 +19,10 @@ class ReverseGeocodeController(private val kakaoGeocodingClient: KakaoGeocodingC
     fun reverseGeocode(
         @RequestParam lat: Double,
         @RequestParam lng: Double,
-    ): ApiResponse<Map<String, String>> {
+    ): ApiResponse<ReverseGeocodeResponse> {
         val address = kakaoGeocodingClient.reverseGeocode(lat, lng)
-        return ApiResponse.ok(mapOf("address" to address))
+        return ApiResponse.ok(ReverseGeocodeResponse(address))
     }
 }
+
+data class ReverseGeocodeResponse(val address: String)

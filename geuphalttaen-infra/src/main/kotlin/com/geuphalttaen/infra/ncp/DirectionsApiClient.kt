@@ -1,6 +1,8 @@
 package com.geuphalttaen.infra.ncp
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.geuphalttaen.common.exception.BusinessException
+import com.geuphalttaen.common.exception.ErrorCode
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.body
@@ -45,7 +47,7 @@ class DirectionsApiClient(private val ncpProperties: NcpProperties) {
             ?.values
             ?.firstOrNull()
             ?.firstOrNull()
-            ?: error("경로를 찾을 수 없습니다")
+            ?: throw BusinessException(ErrorCode.ROUTE_NOT_FOUND)
 
         val path = route.path?.map { LatLng(lat = it[1], lng = it[0]) } ?: emptyList()
         return DirectionsResult(

@@ -8,6 +8,7 @@ interface ToiletRepository {
     fun findByAddress(address: String): ToiletEntity?
     fun findAllByAddressIn(addresses: List<String>): List<ToiletEntity>
     fun findByReportedBy(reportedBy: Long): List<ToiletEntity>
+    fun findByReportedByOrderByCreatedAtDesc(reportedBy: Long): List<ToiletEntity>
     fun save(entity: ToiletEntity): ToiletEntity
     fun saveAll(entities: List<ToiletEntity>): List<ToiletEntity>
 }

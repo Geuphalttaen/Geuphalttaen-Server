@@ -20,7 +20,6 @@ class UserService(
         val reports = toiletRepository.findByReportedBy(userId)
         val postedCount = reports.count { it.status == ToiletStatus.ACTIVE }
         return UserProfileResponse(
-            id = user.id,
             nickname = user.nickname,
             provider = user.provider.name,
             reportCount = reports.size,
@@ -28,18 +27,16 @@ class UserService(
         )
     }
 
-    fun getMyReports(userId: Long): List<MyReportResponse> {
-        val reports = toiletRepository.findByReportedBy(userId)
-        return reports.sortedByDescending { it.createdAt }.map { toilet ->
+    fun getMyReports(userId: Long): List<MyReportResponse> =
+        toiletRepository.findByReportedByOrderByCreatedAtDesc(userId).map { toilet ->
             MyReportResponse(
                 id = toilet.id,
                 name = toilet.name,
                 address = toilet.address,
                 lat = toilet.lat,
                 lng = toilet.lng,
-                status = toilet.status.name,
+                status = toilet.status,
                 createdAt = toilet.createdAt.format(formatter),
             )
         }
-    }
 }
