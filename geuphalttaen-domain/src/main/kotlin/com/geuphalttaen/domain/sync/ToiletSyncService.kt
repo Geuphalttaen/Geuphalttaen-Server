@@ -43,6 +43,7 @@ class ToiletSyncService(
             return syncLogRepository.save(
                 SyncLogEntity(
                     totalFetched = 0,
+                    upsertedCount = 0,
                     insertedCount = 0,
                     updatedCount = 0,
                     deletedCount = 0,
@@ -125,6 +126,7 @@ class ToiletSyncService(
 
         val syncLog = SyncLogEntity(
             totalFetched = totalFetched,
+            upsertedCount = insertedCount + updatedCount,
             insertedCount = insertedCount,
             updatedCount = updatedCount,
             deletedCount = deletedCount,
