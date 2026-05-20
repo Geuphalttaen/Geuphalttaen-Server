@@ -31,14 +31,23 @@ open class PublicToiletCsvClient(
         val idx = headers.withIndex().associate { (i, h) -> h to i }
 
         val items = mutableListOf<ExternalToiletData>()
-        var parseFailCount = 0
+        var noCoords = 0
+        var noAddress = 0
 
         for (row in reader) {
+            fun col(name: String) = idx[name]?.let { row.getOrNull(it)?.trim() }
+            val lat = (col("WGS84위도") ?: col("위도"))?.toDoubleOrNull()
+            val lng = (col("WGS84경도") ?: col("경도"))?.toDoubleOrNull()
+            if (lat == null || lng == null) { noCoords++; continue }
+            val hasAddress = listOf("소재지도로명주소", "도로명주소", "소재지지번주소", "지번주소")
+                .any { col(it)?.isNotBlank() == true }
+            if (!hasAddress) { noAddress++; continue }
             val data = parseRow(row, idx)
-            if (data != null) items.add(data) else parseFailCount++
+            if (data != null) items.add(data)
         }
 
-        log.info("공공데이터 화장실 CSV 파싱 완료: 정상={}건, 파싱실패={}건", items.size, parseFailCount)
+        val parseFailCount = noCoords + noAddress
+        log.info("공공데이터 화장실 CSV 파싱 완료: 정상={}건, 좌표없음={}건, 주소없음={}건", items.size, noCoords, noAddress)
         return ToiletFetchResult(items = items, parseFailCount = parseFailCount)
     }
 
