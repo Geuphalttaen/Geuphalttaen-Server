@@ -2,6 +2,8 @@ package com.geuphalttaen.domain.toilet
 
 import com.geuphalttaen.core.entity.ToiletEntity
 import com.geuphalttaen.core.entity.ToiletStatus
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 
 interface ToiletRepository {
     fun findNearby(lat: Double, lng: Double, radiusMeters: Int): List<ToiletEntity>
@@ -13,4 +15,15 @@ interface ToiletRepository {
     fun countByReportedByAndStatus(reportedBy: Long, status: ToiletStatus): Long
     fun save(entity: ToiletEntity): ToiletEntity
     fun saveAll(entities: List<ToiletEntity>): List<ToiletEntity>
+    fun delete(entity: ToiletEntity)
+
+    /**
+     * 관리자용 페이징 조회 (status 필터 옵션).
+     */
+    fun findByStatusPageable(status: ToiletStatus?, pageable: Pageable): Page<ToiletEntity>
+
+    /**
+     * 관리자용 키워드 페이징 조회 (이름 또는 주소 포함).
+     */
+    fun findByKeywordPageable(keyword: String?, pageable: Pageable): Page<ToiletEntity>
 }
