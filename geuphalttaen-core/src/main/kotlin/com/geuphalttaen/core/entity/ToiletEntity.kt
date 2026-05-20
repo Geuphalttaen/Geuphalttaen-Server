@@ -9,7 +9,12 @@ enum class ToiletStatus {
 }
 
 @Entity
-@Table(name = "toilets", indexes = [Index(name = "idx_toilets_reported_by", columnList = "reported_by")])
+@Table(
+    name = "toilets",
+    indexes = [
+        Index(name = "idx_toilets_reported_by_status", columnList = "reported_by, status"),
+    ],
+)
 class ToiletEntity(
 
     @Id
