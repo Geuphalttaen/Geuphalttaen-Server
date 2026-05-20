@@ -11,7 +11,7 @@ class PublicToiletSyncJob(
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    @Scheduled(cron = "0 0 3 * * 0")
+    @Scheduled(cron = "0 0 0 * * *")
     fun syncWeekly() {
         log.info("공공데이터 화장실 주간 동기화 시작")
         try {
