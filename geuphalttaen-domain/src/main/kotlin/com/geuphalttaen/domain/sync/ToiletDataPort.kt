@@ -1,7 +1,10 @@
 package com.geuphalttaen.domain.sync
 
+import java.io.InputStream
+import java.nio.charset.Charset
+
 interface ToiletDataPort {
-    fun fetchAllToilets(): ToiletFetchResult
+    fun fetchFromStream(inputStream: InputStream, charset: Charset = Charset.forName("EUC-KR")): ToiletFetchResult
 }
 
 data class ToiletFetchResult(

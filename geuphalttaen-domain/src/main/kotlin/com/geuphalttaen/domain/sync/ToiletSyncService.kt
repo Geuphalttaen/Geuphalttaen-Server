@@ -8,6 +8,8 @@ import com.geuphalttaen.domain.toilet.ToiletRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.io.InputStream
+import java.nio.charset.Charset
 
 @Service
 class ToiletSyncService(
@@ -37,13 +39,13 @@ class ToiletSyncService(
         }
 
     @Transactional
-    fun syncAll(): SyncLogEntity {
-        log.info("공공 화장실 데이터 동기화 시작")
+    fun syncFromUpload(inputStream: InputStream, charset: Charset = Charset.forName("EUC-KR")): SyncLogEntity {
+        log.info("공공 화장실 데이터 동기화 시작 (파일 업로드)")
 
         val fetchResult = try {
-            toiletDataPort.fetchAllToilets()
+            toiletDataPort.fetchFromStream(inputStream, charset)
         } catch (e: RuntimeException) {
-            log.error("공공 화장실 데이터 조회 실패: {}", e.message)
+            log.error("공공 화장실 데이터 파싱 실패: {}", e.message)
             return syncLogRepository.save(
                 SyncLogEntity(
                     totalFetched = 0,
@@ -60,7 +62,7 @@ class ToiletSyncService(
 
         val externalData = fetchResult.items
         val totalFetched = externalData.size + fetchResult.parseFailCount
-        log.info("공공 화장실 데이터 조회 완료: 정상={}건, 파싱실패={}건", externalData.size, fetchResult.parseFailCount)
+        log.info("공공 화장실 데이터 파싱 완료: 정상={}건, 파싱실패={}건", externalData.size, fetchResult.parseFailCount)
 
         var insertedCount = 0
         var updatedCount = 0

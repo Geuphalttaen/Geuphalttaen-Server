@@ -3,21 +3,18 @@ package com.geuphalttaen.infra.opendata
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
-import java.io.InputStream
 import java.nio.charset.Charset
 
 class PublicToiletCsvClientTest {
 
-    private val properties = OpendataProperties()
+    private val client = PublicToiletCsvClient(OpendataProperties())
 
-    private fun clientWithCsv(csv: String, charset: Charset = Charsets.UTF_8): PublicToiletCsvClient {
-        return object : PublicToiletCsvClient(properties) {
-            override fun openCsvStream(): Pair<InputStream, Charset> =
-                ByteArrayInputStream(csv.toByteArray(charset)) to charset
-        }
-    }
+    private val charset: Charset = Charsets.UTF_8
 
     private val headers = "관리ID,화장실명,도로명주소,지번주소,위도,경도,남성용-대변기수,여성용-대변기수,장애인용-남변기수,장애인용-여변기수,영유아보육시설,수유실"
+
+    private fun fetchFromCsv(csv: String) =
+        client.fetchFromStream(ByteArrayInputStream(csv.toByteArray(charset)), charset)
 
     @Test
     fun `정상 행 파싱`() {
@@ -26,7 +23,7 @@ class PublicToiletCsvClientTest {
             1,강남화장실,서울시 강남구 테헤란로 1,,37.5,127.0,3,2,1,0,0,1
         """.trimIndent()
 
-        val result = clientWithCsv(csv).fetchAllToilets()
+        val result = fetchFromCsv(csv)
 
         assertThat(result.items).hasSize(1)
         val item = result.items[0]
@@ -47,7 +44,7 @@ class PublicToiletCsvClientTest {
             1,강남화장실,서울시 강남구 테헤란로 1,,N/A,127.0,1,1,0,0,0,0
         """.trimIndent()
 
-        val result = clientWithCsv(csv).fetchAllToilets()
+        val result = fetchFromCsv(csv)
 
         assertThat(result.items).isEmpty()
         assertThat(result.parseFailCount).isEqualTo(1)
@@ -60,7 +57,7 @@ class PublicToiletCsvClientTest {
             1,화장실,,서울시 강남구 역삼동 123,37.5,127.0,1,1,0,0,0,0
         """.trimIndent()
 
-        val result = clientWithCsv(csv).fetchAllToilets()
+        val result = fetchFromCsv(csv)
 
         assertThat(result.items).hasSize(1)
         assertThat(result.items[0].address).isEqualTo("서울시 강남구 역삼동 123")
@@ -74,7 +71,7 @@ class PublicToiletCsvClientTest {
             2,화장실B,서울시 강남구 B로 2,,37.2,127.2,1,0,0,0,0,0
         """.trimIndent()
 
-        val result = clientWithCsv(csv).fetchAllToilets()
+        val result = fetchFromCsv(csv)
 
         assertThat(result.items).hasSize(2)
         assertThat(result.items.map { it.name }).containsExactly("화장실A", "화장실B")
@@ -84,7 +81,7 @@ class PublicToiletCsvClientTest {
     fun `빈 CSV 처리`() {
         val csv = headers
 
-        val result = clientWithCsv(csv).fetchAllToilets()
+        val result = fetchFromCsv(csv)
 
         assertThat(result.items).isEmpty()
         assertThat(result.parseFailCount).isEqualTo(0)
@@ -97,7 +94,7 @@ class PublicToiletCsvClientTest {
             1,화장실,서울시 테스트로 1,,37.5,127.0,0,0,0,2,0,0
         """.trimIndent()
 
-        val result = clientWithCsv(csv).fetchAllToilets()
+        val result = fetchFromCsv(csv)
 
         assertThat(result.items[0].disabled).isTrue()
     }
