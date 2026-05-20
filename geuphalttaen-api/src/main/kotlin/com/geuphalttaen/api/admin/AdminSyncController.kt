@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.server.ResponseStatusException
+import java.nio.charset.Charset
 
 @RestController
 @RequestMapping("/api/v1/admin/toilets")
@@ -35,7 +36,8 @@ class AdminSyncController(
         if (file.isEmpty) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "업로드 파일이 비어 있습니다.")
         }
-        val syncLog = toiletSyncService.syncFromUpload(file.inputStream)
+        // 행정안전부 공공데이터 포털 CSV는 EUC-KR 인코딩으로 배포됨
+        val syncLog = toiletSyncService.syncFromUpload(file.inputStream, Charset.forName("EUC-KR"))
         return ApiResponse.ok(
             SyncResultResponse(
                 id = syncLog.id,
