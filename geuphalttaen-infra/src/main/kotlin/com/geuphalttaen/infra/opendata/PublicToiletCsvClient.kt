@@ -27,6 +27,7 @@ open class PublicToiletCsvClient(
             log.warn("CSV 헤더를 읽을 수 없습니다.")
             return ToiletFetchResult(emptyList(), 0)
         }
+        log.info("CSV 헤더 목록: {}", headers)
         val idx = headers.withIndex().associate { (i, h) -> h to i }
 
         val items = mutableListOf<ExternalToiletData>()
@@ -47,16 +48,22 @@ open class PublicToiletCsvClient(
         val lat = col("위도")?.toDoubleOrNull() ?: return null
         val lng = col("경도")?.toDoubleOrNull() ?: return null
 
-        val address = col("도로명주소")?.takeIf { it.isNotBlank() }
+        val address = col("소재지도로명주소")?.takeIf { it.isNotBlank() }
+            ?: col("도로명주소")?.takeIf { it.isNotBlank() }
+            ?: col("소재지지번주소")?.takeIf { it.isNotBlank() }
             ?: col("지번주소")?.takeIf { it.isNotBlank() }
             ?: return null
 
         val male = (col("남성용-대변기수")?.toIntOrNull() ?: 0) > 0
         val female = (col("여성용-대변기수")?.toIntOrNull() ?: 0) > 0
-        val disabled = ((col("장애인용-남변기수")?.toIntOrNull() ?: 0)
-                + (col("장애인용-여변기수")?.toIntOrNull() ?: 0)) > 0
-        val familyRoom = ((col("영유아보육시설")?.toIntOrNull() ?: 0)
-                + (col("수유실")?.toIntOrNull() ?: 0)) > 0
+        val disabled = ((col("남성용-장애인용대변기수")?.toIntOrNull()
+            ?: col("장애인용-남변기수")?.toIntOrNull() ?: 0)
+                + (col("여성용-장애인용대변기수")?.toIntOrNull()
+            ?: col("장애인용-여변기수")?.toIntOrNull() ?: 0)) > 0
+        val familyRoom = ((col("기저귀교환대남자화장실")?.toIntOrNull()
+            ?: col("영유아보육시설")?.toIntOrNull() ?: 0)
+                + (col("수유실설치여부")?.let { if (it == "Y") 1 else it.toIntOrNull() }
+            ?: col("수유실")?.toIntOrNull() ?: 0)) > 0
 
         return ExternalToiletData(
             name = col("화장실명")?.ifBlank { address } ?: address,
