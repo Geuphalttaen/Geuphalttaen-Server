@@ -45,8 +45,8 @@ open class PublicToiletCsvClient(
     private fun parseRow(row: Array<String>, idx: Map<String, Int>): ExternalToiletData? {
         fun col(name: String) = idx[name]?.let { row.getOrNull(it)?.trim() }
 
-        val lat = col("위도")?.toDoubleOrNull() ?: return null
-        val lng = col("경도")?.toDoubleOrNull() ?: return null
+        val lat = (col("WGS84위도") ?: col("위도"))?.toDoubleOrNull() ?: return null
+        val lng = (col("WGS84경도") ?: col("경도"))?.toDoubleOrNull() ?: return null
 
         val address = col("소재지도로명주소")?.takeIf { it.isNotBlank() }
             ?: col("도로명주소")?.takeIf { it.isNotBlank() }
@@ -60,10 +60,11 @@ open class PublicToiletCsvClient(
             ?: col("장애인용-남변기수")?.toIntOrNull() ?: 0)
                 + (col("여성용-장애인용대변기수")?.toIntOrNull()
             ?: col("장애인용-여변기수")?.toIntOrNull() ?: 0)) > 0
-        val familyRoom = ((col("기저귀교환대남자화장실")?.toIntOrNull()
-            ?: col("영유아보육시설")?.toIntOrNull() ?: 0)
-                + (col("수유실설치여부")?.let { if (it == "Y") 1 else it.toIntOrNull() }
-            ?: col("수유실")?.toIntOrNull() ?: 0)) > 0
+        val familyRoom = col("기저귀교환대유무")?.trim().equals("Y", ignoreCase = true)
+            || (col("기저귀교환대남자화장실")?.toIntOrNull() ?: 0) > 0
+            || (col("영유아보육시설")?.toIntOrNull() ?: 0) > 0
+            || col("수유실설치여부")?.trim().equals("Y", ignoreCase = true)
+            || (col("수유실")?.toIntOrNull() ?: 0) > 0
 
         return ExternalToiletData(
             name = col("화장실명")?.ifBlank { address } ?: address,
