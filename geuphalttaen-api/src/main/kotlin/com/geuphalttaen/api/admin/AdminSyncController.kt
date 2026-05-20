@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/api/v1/admin")
+@RequestMapping("/api/v1/admin/toilets")
 @Tag(name = "Admin", description = "관리자 API")
 class AdminSyncController(
     private val syncAsyncRunner: SyncAsyncRunner,

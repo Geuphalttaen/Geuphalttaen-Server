@@ -42,6 +42,16 @@ class SecurityConfig(
                         )
                     )
                 }
+                // 권한 부족 요청 → 403
+                ex.accessDeniedHandler { _, response, _ ->
+                    response.status = HttpStatus.FORBIDDEN.value()
+                    response.contentType = "application/json;charset=UTF-8"
+                    response.writer.write(
+                        objectMapper.writeValueAsString(
+                            ApiResponse.error<Nothing>("FORBIDDEN", "접근 권한이 없습니다")
+                        )
+                    )
+                }
             }
             .authorizeHttpRequests { auth ->
                 auth
@@ -50,9 +60,8 @@ class SecurityConfig(
                     .requestMatchers(HttpMethod.GET, "/api/v1/directions").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/geocode/**").permitAll()
                     .requestMatchers("/api/v1/auth/**").permitAll()
-                    // B1: JwtAuthentication.getAuthorities() 가 emptyList() 이므로 hasRole("ADMIN") 은 항상 403.
-                    //     권한 관리는 Issue #5 에서 처리하며, 현재는 인증된 사용자면 접근 허용.
-                    .requestMatchers("/api/v1/admin/**").authenticated()
+                    .requestMatchers("/api/v1/admin/auth/**").permitAll()
+                    .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                     .requestMatchers(
                         "/actuator/health",
                         "/v3/api-docs/**",
@@ -79,7 +88,8 @@ class JwtAuthenticationFilter(
         val token = resolveToken(request)
         if (token != null && jwtProvider.isValid(token)) {
             val userId = jwtProvider.getUserId(token)
-            val auth = JwtAuthentication(userId)
+            val roles = jwtProvider.getRoles(token)
+            val auth = JwtAuthentication(userId, roles)
             SecurityContextHolder.getContext().authentication = auth
         }
         filterChain.doFilter(request, response)
