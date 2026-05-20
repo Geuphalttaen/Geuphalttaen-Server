@@ -32,7 +32,7 @@ class ToiletSyncServiceTest {
         whenever(syncLogRepository.save(any())).thenAnswer { it.arguments[0] as SyncLogEntity }
         whenever(toiletRepository.saveAll(any<List<ToiletEntity>>())).thenAnswer { it.arguments[0] as List<ToiletEntity> }
         whenever(toiletRepository.findAllByAddressIn(any())).thenReturn(emptyList())
-        whenever(toiletRepository.findAllActivePublicNotInAddresses(any())).thenReturn(emptyList())
+        whenever(toiletRepository.findAllActivePublic()).thenReturn(emptyList())
     }
 
     private fun makeResult(vararg addresses: String): ToiletFetchResult = ToiletFetchResult(
@@ -127,7 +127,7 @@ class ToiletSyncServiceTest {
         val staleToilet = ToiletEntity(id = 99L, name = "삭제될화장실", address = "구 주소", lat = 37.0, lng = 127.0)
         whenever(toiletDataPort.fetchFromStream(any(), any())).thenReturn(makeResult("새 주소"))
         whenever(toiletRepository.findAllByAddressIn(any())).thenReturn(emptyList())
-        whenever(toiletRepository.findAllActivePublicNotInAddresses(any())).thenReturn(listOf(staleToilet))
+        whenever(toiletRepository.findAllActivePublic()).thenReturn(listOf(staleToilet))
 
         val result = toiletSyncService.syncFromUpload(emptyInputStream)
 
