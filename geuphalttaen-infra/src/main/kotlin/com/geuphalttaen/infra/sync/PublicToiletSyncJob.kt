@@ -17,8 +17,8 @@ class PublicToiletSyncJob(
         try {
             val result = toiletSyncService.syncAll()
             log.info(
-                "공공데이터 화장실 주간 동기화 완료: total={}, upserted={}, failed={}, status={}",
-                result.totalFetched, result.upsertedCount, result.failedCount, result.status,
+                "공공데이터 화장실 주간 동기화 완료: total={}, inserted={}, updated={}, deleted={}, failed={}, status={}",
+                result.totalFetched, result.insertedCount, result.updatedCount, result.deletedCount, result.failedCount, result.status,
             )
         } catch (e: Exception) {
             log.error("공공데이터 화장실 주간 동기화 실패", e)

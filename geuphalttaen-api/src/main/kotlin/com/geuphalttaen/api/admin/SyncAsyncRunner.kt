@@ -21,7 +21,7 @@ class SyncAsyncRunner(
         log.info("비동기 공공 화장실 동기화 시작")
         try {
             val result = toiletSyncService.syncAll()
-            log.info("비동기 공공 화장실 동기화 완료: status={}, upserted={}", result.status, result.upsertedCount)
+            log.info("비동기 공공 화장실 동기화 완료: status={}, inserted={}, updated={}, deleted={}", result.status, result.insertedCount, result.updatedCount, result.deletedCount)
         } catch (e: Exception) {
             log.error("비동기 공공 화장실 동기화 실패: {}", e.message, e)
         }
