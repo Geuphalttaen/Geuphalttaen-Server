@@ -48,9 +48,6 @@ class ToiletRepositoryImpl(
     override fun findAllByAddressIn(addresses: List<String>): List<ToiletEntity> =
         jpaRepository.findAllByAddressIn(addresses)
 
-    override fun findByReportedBy(reportedBy: Long): List<ToiletEntity> =
-        jpaRepository.findByReportedBy(reportedBy)
-
     override fun findByReportedByOrderByCreatedAtDesc(reportedBy: Long): List<ToiletEntity> =
         jpaRepository.findByReportedByOrderByCreatedAtDesc(reportedBy)
 

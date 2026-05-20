@@ -27,8 +27,9 @@ class UserService(
         )
     }
 
-    fun getMyReports(userId: Long): List<MyReportResponse> =
-        toiletRepository.findByReportedByOrderByCreatedAtDesc(userId).map { toilet ->
+    fun getMyReports(userId: Long): List<MyReportResponse> {
+        userRepository.findById(userId) ?: throw BusinessException(ErrorCode.USER_NOT_FOUND)
+        return toiletRepository.findByReportedByOrderByCreatedAtDesc(userId).map { toilet ->
             MyReportResponse(
                 id = toilet.id,
                 name = toilet.name,
@@ -39,4 +40,5 @@ class UserService(
                 createdAt = toilet.createdAt.format(formatter),
             )
         }
+    }
 }
