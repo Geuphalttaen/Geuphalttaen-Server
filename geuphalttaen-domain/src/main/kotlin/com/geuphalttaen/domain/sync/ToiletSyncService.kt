@@ -17,6 +17,10 @@ class ToiletSyncService(
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
+    companion object {
+        private const val CHUNK_SIZE = 500
+    }
+
     fun getSyncLogs(n: Int = 10): List<SyncResultResponse> =
         syncLogRepository.findTopNByOrderByCreatedAtDesc(n).map {
             SyncResultResponse(
@@ -58,70 +62,76 @@ class ToiletSyncService(
         val totalFetched = externalData.size + fetchResult.parseFailCount
         log.info("공공 화장실 데이터 조회 완료: 정상={}건, 파싱실패={}건", externalData.size, fetchResult.parseFailCount)
 
-        val addresses = externalData.map { it.address }
-        val existingByAddress = toiletRepository.findAllByAddressIn(addresses)
-            .associateBy { it.address }
-
-        val toSave = mutableListOf<ToiletEntity>()
         var insertedCount = 0
         var updatedCount = 0
         var failedCount = fetchResult.parseFailCount
 
-        for (data in externalData) {
-            try {
-                val existing = existingByAddress[data.address]
-                if (existing != null) {
-                    existing.name = data.name
-                    existing.lat = data.lat
-                    existing.lng = data.lng
-                    existing.male = data.male
-                    existing.female = data.female
-                    existing.disabled = data.disabled
-                    existing.familyRoom = data.familyRoom
-                    existing.isPublic = true
-                    existing.status = ToiletStatus.ACTIVE
-                    toSave.add(existing)
-                    updatedCount++
-                } else {
-                    toSave.add(
-                        ToiletEntity(
-                            name = data.name,
-                            address = data.address,
-                            lat = data.lat,
-                            lng = data.lng,
-                            isPublic = true,
-                            male = data.male,
-                            female = data.female,
-                            disabled = data.disabled,
-                            familyRoom = data.familyRoom,
-                            status = ToiletStatus.ACTIVE,
-                        ),
-                    )
-                    insertedCount++
+        // CHUNK_SIZE 단위로 쪼개어 처리 — IN 절 폭발 및 OOM 방지
+        val processedAddresses = mutableSetOf<String>()
+        for (chunk in externalData.chunked(CHUNK_SIZE)) {
+            val addresses = chunk.map { it.address }
+            val existingByAddress = toiletRepository.findAllByAddressIn(addresses)
+                .associateBy { it.address }
+
+            val toSave = mutableListOf<ToiletEntity>()
+            for (data in chunk) {
+                try {
+                    val existing = existingByAddress[data.address]
+                    if (existing != null) {
+                        existing.name = data.name
+                        existing.lat = data.lat
+                        existing.lng = data.lng
+                        existing.male = data.male
+                        existing.female = data.female
+                        existing.disabled = data.disabled
+                        existing.familyRoom = data.familyRoom
+                        existing.isPublic = true
+                        existing.status = ToiletStatus.ACTIVE
+                        toSave.add(existing)
+                        updatedCount++
+                    } else {
+                        toSave.add(
+                            ToiletEntity(
+                                name = data.name,
+                                address = data.address,
+                                lat = data.lat,
+                                lng = data.lng,
+                                isPublic = true,
+                                male = data.male,
+                                female = data.female,
+                                disabled = data.disabled,
+                                familyRoom = data.familyRoom,
+                                status = ToiletStatus.ACTIVE,
+                            ),
+                        )
+                        insertedCount++
+                    }
+                } catch (e: Exception) {
+                    log.error("화장실 upsert 준비 실패: address={}, error={}", data.address, e.message)
+                    failedCount++
                 }
-            } catch (e: Exception) {
-                log.error("화장실 upsert 준비 실패: address={}, error={}", data.address, e.message)
-                failedCount++
             }
+            toiletRepository.saveAll(toSave)
+            processedAddresses.addAll(addresses)
+            log.info("청크 처리 완료: inserted={}, updated={} (누적)", insertedCount, updatedCount)
         }
 
-        toiletRepository.saveAll(toSave)
-
-        // CSV에서 사라진 공공데이터 항목 삭제 (reportedBy=null이고 ACTIVE인 것 중 이번 CSV에 없는 것)
-        val deletedCount = if (addresses.isNotEmpty()) {
-            val stale = toiletRepository.findAllActivePublicNotInAddresses(addresses)
-            toiletRepository.deleteAll(stale)
-            log.info("공공 화장실 삭제: {}건", stale.size)
+        // CSV에서 사라진 공공 항목 삭제 — 청크 단위로 쿼리
+        val deletedCount = if (processedAddresses.isNotEmpty()) {
+            val stale = toiletRepository.findAllActivePublicNotInAddresses(processedAddresses)
+            if (stale.isNotEmpty()) {
+                toiletRepository.deleteAll(stale)
+                log.info("공공 화장실 삭제: {}건", stale.size)
+            }
             stale.size
         } else {
             0
         }
 
         val status = when {
-            failedCount == 0 && deletedCount == 0 -> SyncStatus.SUCCESS
-            failedCount == 0 -> SyncStatus.SUCCESS
-            insertedCount + updatedCount == 0 -> SyncStatus.FAILED
-            else -> SyncStatus.PARTIAL
+            insertedCount + updatedCount == 0 && failedCount > 0 -> SyncStatus.FAILED
+            failedCount > 0 -> SyncStatus.PARTIAL
+            else -> SyncStatus.SUCCESS
         }
 
         val syncLog = SyncLogEntity(

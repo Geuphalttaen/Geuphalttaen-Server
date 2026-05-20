@@ -44,6 +44,8 @@ open class PublicToiletCsvClient(
         // 2단계: 쿠키 + same-origin Referer 로 CSV 다운로드
         val dlConn = URI(properties.csvUrl).toURL().openConnection() as HttpURLConnection
         dlConn.instanceFollowRedirects = true
+        dlConn.connectTimeout = 10_000
+        dlConn.readTimeout = 120_000
         dlConn.setRequestProperty("User-Agent", USER_AGENT)
         dlConn.setRequestProperty("Referer", PAGE_URL)
         dlConn.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
