@@ -7,7 +7,6 @@ import com.geuphalttaen.core.entity.ToiletStatus
 import com.geuphalttaen.domain.toilet.ToiletRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import java.io.InputStream
 import java.nio.charset.Charset
 
@@ -38,7 +37,6 @@ class ToiletSyncService(
             )
         }
 
-    @Transactional
     fun syncFromUpload(inputStream: InputStream, charset: Charset = Charset.forName("EUC-KR")): SyncLogEntity {
         log.info("공공 화장실 데이터 동기화 시작 (파일 업로드)")
 
