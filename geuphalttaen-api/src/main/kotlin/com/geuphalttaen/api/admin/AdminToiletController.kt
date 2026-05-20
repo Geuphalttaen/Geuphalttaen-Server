@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Max
+import jakarta.validation.constraints.Min
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.HttpStatus
@@ -39,7 +40,7 @@ class AdminToiletController(
     @GetMapping
     fun getToilets(
         @RequestParam(required = false) keyword: String?,
-        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "0") @Min(0) page: Int,
         @RequestParam(defaultValue = "20") @Max(100) size: Int,
     ): ApiResponse<Page<AdminToiletResponse>> {
         val pageable = PageRequest.of(page, size)
