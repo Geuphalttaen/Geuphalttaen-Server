@@ -4,7 +4,5 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 
 @ConfigurationProperties(prefix = "opendata.toilet")
 data class OpendataProperties(
-    val apiKey: String = "",
-    val baseUrl: String = "https://api.odcloud.kr/api",
-    val pageSize: Int = 1000,
+    val csvUrl: String = "https://file.localdata.go.kr/file/download/public_restroom_info/info",
 )
