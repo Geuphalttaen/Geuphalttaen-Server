@@ -10,4 +10,6 @@ interface ToiletJpaRepository : JpaRepository<ToiletEntity, Long> {
     fun findByReportedByOrderByCreatedAtDesc(reportedBy: Long): List<ToiletEntity>
     fun countByReportedBy(reportedBy: Long): Long
     fun countByReportedByAndStatus(reportedBy: Long, status: ToiletStatus): Long
+    fun countByStatus(status: ToiletStatus): Long
+    fun findAllByReportedByIsNullAndStatus(status: ToiletStatus): List<ToiletEntity>
 }

@@ -84,6 +84,13 @@ class JwtProviderTest {
     }
 
     @Test
+    fun `getTokenType - Admin Access Token은 ADMIN_ACCESS 타입을 반환한다`() {
+        val token = jwtProvider.generateAdminAccessToken(1L)
+
+        assertThat(jwtProvider.getTokenType(token)).isEqualTo("ADMIN_ACCESS")
+    }
+
+    @Test
     fun `getTokenType - 잘못된 토큰은 null을 반환한다`() {
         assertThat(jwtProvider.getTokenType("invalid.token")).isNull()
     }

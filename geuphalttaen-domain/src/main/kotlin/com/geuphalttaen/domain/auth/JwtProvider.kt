@@ -21,6 +21,12 @@ class JwtProvider(
 
     fun generateRefreshToken(userId: Long): String = buildToken(userId, refreshTokenExpiryMs, "REFRESH")
 
+    /**
+     * 관리자용 Access Token 발급 (ROLE_ADMIN 권한 포함).
+     * type 클레임을 "ADMIN_ACCESS"로 설정하여 일반 Access Token과 구분한다.
+     */
+    fun generateAdminAccessToken(adminId: Long): String = buildToken(adminId, accessTokenExpiryMs, "ADMIN_ACCESS", listOf("ROLE_ADMIN"))
+
     fun getUserId(token: String): Long {
         val claims = Jwts.parser()
             .verifyWith(key)
@@ -36,13 +42,23 @@ class JwtProvider(
         Jwts.parser().verifyWith(key).build().parseSignedClaims(token).payload["type"] as? String
     }.getOrNull()
 
-    private fun buildToken(userId: Long, expiryMs: Long, type: String): String {
+    /**
+     * 토큰에 포함된 역할(role) 목록을 반환한다.
+     * 역할이 없으면 빈 리스트를 반환한다.
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun getRoles(token: String): List<String> = runCatching {
+        Jwts.parser().verifyWith(key).build().parseSignedClaims(token).payload["roles"] as? List<String>
+    }.getOrNull() ?: emptyList()
+
+    private fun buildToken(userId: Long, expiryMs: Long, type: String, roles: List<String> = emptyList()): String {
         val now = Date()
         return Jwts.builder()
             .subject(userId.toString())
             .issuedAt(now)
             .expiration(Date(now.time + expiryMs))
             .claim("type", type)
+            .apply { if (roles.isNotEmpty()) claim("roles", roles) }
             .signWith(key)
             .compact()
     }

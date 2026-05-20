@@ -28,4 +28,11 @@ enum class ErrorCode(
 
     // 경로 에러
     ROUTE_NOT_FOUND("R001", HttpStatus.UNPROCESSABLE_ENTITY, "경로를 찾을 수 없습니다."),
+
+    // 관리자 에러
+    ADMIN_NOT_FOUND("AD001", HttpStatus.NOT_FOUND, "관리자 계정을 찾을 수 없습니다."),
+    ADMIN_INVALID_CREDENTIALS("AD002", HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다."),
+    TOILET_STATUS_INVALID("AD003", HttpStatus.BAD_REQUEST, "해당 상태로 변경할 수 없습니다."),
+    ADMIN_ALREADY_EXISTS("AD004", HttpStatus.CONFLICT, "이미 관리자 계정이 존재합니다."),
+    ADMIN_SEED_FORBIDDEN("AD005", HttpStatus.FORBIDDEN, "시드 시크릿이 올바르지 않습니다."),
 }

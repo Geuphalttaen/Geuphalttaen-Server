@@ -32,6 +32,9 @@ dependencies {
     // Jackson Kotlin
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 
+    // CSV 파싱
+    implementation("com.opencsv:opencsv:5.9")
+
     runtimeOnly("com.mysql:mysql-connector-j")
 
     // Test

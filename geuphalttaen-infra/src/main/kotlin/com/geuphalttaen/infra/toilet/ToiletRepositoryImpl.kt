@@ -7,6 +7,9 @@ import com.geuphalttaen.domain.toilet.ToiletRepository
 import com.querydsl.core.types.dsl.Expressions
 import com.querydsl.jpa.impl.JPAQueryFactory
 import jakarta.persistence.EntityManager
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Repository
 
 @Repository
@@ -55,4 +58,57 @@ class ToiletRepositoryImpl(
     override fun save(entity: ToiletEntity): ToiletEntity = jpaRepository.save(entity)
 
     override fun saveAll(entities: List<ToiletEntity>): List<ToiletEntity> = jpaRepository.saveAll(entities)
+
+    override fun delete(entity: ToiletEntity) = jpaRepository.delete(entity)
+
+    override fun countByStatus(status: ToiletStatus): Long = jpaRepository.countByStatus(status)
+
+    override fun findAllActivePublic(): List<ToiletEntity> =
+        jpaRepository.findAllByReportedByIsNullAndStatus(ToiletStatus.ACTIVE)
+
+    override fun deleteAll(entities: List<ToiletEntity>) = jpaRepository.deleteAll(entities)
+
+    override fun findByStatusPageable(status: ToiletStatus?, pageable: Pageable): Page<ToiletEntity> {
+        val toilet = QToiletEntity.toiletEntity
+        val predicate = status?.let { toilet.status.eq(it) }
+
+        val content = queryFactory
+            .selectFrom(toilet)
+            .where(predicate)
+            .orderBy(toilet.createdAt.desc())
+            .offset(pageable.offset)
+            .limit(pageable.pageSize.toLong())
+            .fetch()
+
+        val total = queryFactory
+            .select(toilet.count())
+            .from(toilet)
+            .where(predicate)
+            .fetchOne() ?: 0L
+
+        return PageImpl(content, pageable, total)
+    }
+
+    override fun findByKeywordPageable(keyword: String?, pageable: Pageable): Page<ToiletEntity> {
+        val toilet = QToiletEntity.toiletEntity
+        val predicate = keyword?.takeIf { it.isNotBlank() }?.let {
+            toilet.name.containsIgnoreCase(it).or(toilet.address.containsIgnoreCase(it))
+        }
+
+        val content = queryFactory
+            .selectFrom(toilet)
+            .where(predicate)
+            .orderBy(toilet.createdAt.desc())
+            .offset(pageable.offset)
+            .limit(pageable.pageSize.toLong())
+            .fetch()
+
+        val total = queryFactory
+            .select(toilet.count())
+            .from(toilet)
+            .where(predicate)
+            .fetchOne() ?: 0L
+
+        return PageImpl(content, pageable, total)
+    }
 }

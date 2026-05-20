@@ -1,8 +1,11 @@
 package com.geuphalttaen.common.exception
 
 import com.geuphalttaen.common.response.ApiResponse
+import jakarta.validation.ConstraintViolationException
 import org.slf4j.LoggerFactory
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 
@@ -17,6 +20,26 @@ class GlobalExceptionHandler {
         return ResponseEntity
             .status(e.errorCode.status)
             .body(ApiResponse.error(e.errorCode.code, e.message ?: e.errorCode.message))
+    }
+
+    /** @Valid 검증 실패 (RequestBody) */
+    @ExceptionHandler(MethodArgumentNotValidException::class)
+    fun handleMethodArgumentNotValid(e: MethodArgumentNotValidException): ResponseEntity<ApiResponse<Nothing>> {
+        val message = e.bindingResult.fieldErrors.joinToString(", ") { "${it.field}: ${it.defaultMessage}" }
+        log.warn("Validation failed: {}", message)
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(ApiResponse.error("C400", message))
+    }
+
+    /** @Validated + @Max/@Min 검증 실패 (RequestParam/PathVariable) */
+    @ExceptionHandler(ConstraintViolationException::class)
+    fun handleConstraintViolation(e: ConstraintViolationException): ResponseEntity<ApiResponse<Nothing>> {
+        val message = e.constraintViolations.joinToString(", ") { it.message }
+        log.warn("Constraint violation: {}", message)
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(ApiResponse.error("C400", message))
     }
 
     @ExceptionHandler(Exception::class)
