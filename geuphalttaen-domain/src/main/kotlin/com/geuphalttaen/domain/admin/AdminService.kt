@@ -69,6 +69,18 @@ class AdminService(
     // ────────────────────────────────────────────
 
     /**
+     * 제보 상태별 통계 조회.
+     */
+    @Transactional(readOnly = true)
+    fun getReportStats(): ReportStatsResponse {
+        return ReportStatsResponse(
+            pending = toiletRepository.countByStatus(ToiletStatus.PENDING).toInt(),
+            active = toiletRepository.countByStatus(ToiletStatus.ACTIVE).toInt(),
+            rejected = toiletRepository.countByStatus(ToiletStatus.REJECTED).toInt(),
+        )
+    }
+
+    /**
      * 제보 목록 페이징 조회.
      * status 필터가 없으면 전체를 반환한다.
      */

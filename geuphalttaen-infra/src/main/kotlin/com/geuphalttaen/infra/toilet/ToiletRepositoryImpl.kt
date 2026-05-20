@@ -61,6 +61,8 @@ class ToiletRepositoryImpl(
 
     override fun delete(entity: ToiletEntity) = jpaRepository.delete(entity)
 
+    override fun countByStatus(status: ToiletStatus): Long = jpaRepository.countByStatus(status)
+
     override fun findByStatusPageable(status: ToiletStatus?, pageable: Pageable): Page<ToiletEntity> {
         val toilet = QToiletEntity.toiletEntity
         val predicate = status?.let { toilet.status.eq(it) }

@@ -3,6 +3,7 @@ package com.geuphalttaen.api.admin
 import com.geuphalttaen.common.response.ApiResponse
 import com.geuphalttaen.core.entity.ToiletStatus
 import com.geuphalttaen.domain.admin.AdminService
+import com.geuphalttaen.domain.admin.ReportStatsResponse
 import com.geuphalttaen.domain.toilet.AdminToiletResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
@@ -29,6 +30,11 @@ import org.springframework.web.bind.annotation.RestController
 class AdminReportController(
     private val adminService: AdminService,
 ) {
+
+    @Operation(summary = "제보 통계 조회")
+    @GetMapping("/stats")
+    fun getReportStats(): ApiResponse<ReportStatsResponse> =
+        ApiResponse.ok(adminService.getReportStats())
 
     @Operation(summary = "제보 목록 조회 (페이징, status 필터 옵션)")
     @GetMapping

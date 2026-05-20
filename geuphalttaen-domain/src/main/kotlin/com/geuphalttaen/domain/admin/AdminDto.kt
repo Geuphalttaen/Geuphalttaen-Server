@@ -26,3 +26,8 @@ data class AdminSeedRequest(
     @field:Email @field:NotBlank val email: String,
     @field:NotBlank @field:Size(min = 8) val password: String,
 )
+
+/**
+ * 제보 상태별 카운트 통계 응답 DTO.
+ */
+data class ReportStatsResponse(val pending: Int, val active: Int, val rejected: Int)

@@ -100,6 +100,23 @@ class AdminServiceTest {
     }
 
     // ────────────────────────────────────────────
+    // 제보 통계
+    // ────────────────────────────────────────────
+
+    @Test
+    fun `getReportStats - 각 상태별 카운트를 올바르게 반환한다`() {
+        `when`(toiletRepository.countByStatus(ToiletStatus.PENDING)).thenReturn(3L)
+        `when`(toiletRepository.countByStatus(ToiletStatus.ACTIVE)).thenReturn(10L)
+        `when`(toiletRepository.countByStatus(ToiletStatus.REJECTED)).thenReturn(2L)
+
+        val result = adminService.getReportStats()
+
+        assertThat(result.pending).isEqualTo(3)
+        assertThat(result.active).isEqualTo(10)
+        assertThat(result.rejected).isEqualTo(2)
+    }
+
+    // ────────────────────────────────────────────
     // 제보 관리
     // ────────────────────────────────────────────
 

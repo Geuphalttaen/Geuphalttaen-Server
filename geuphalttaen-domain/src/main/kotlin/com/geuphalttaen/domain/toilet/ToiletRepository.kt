@@ -26,4 +26,9 @@ interface ToiletRepository {
      * 관리자용 키워드 페이징 조회 (이름 또는 주소 포함).
      */
     fun findByKeywordPageable(keyword: String?, pageable: Pageable): Page<ToiletEntity>
+
+    /**
+     * 특정 상태의 화장실 수를 반환한다.
+     */
+    fun countByStatus(status: ToiletStatus): Long
 }
