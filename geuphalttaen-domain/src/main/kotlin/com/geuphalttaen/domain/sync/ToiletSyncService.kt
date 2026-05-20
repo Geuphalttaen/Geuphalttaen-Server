@@ -17,32 +17,25 @@ class ToiletSyncService(
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    /**
-     * 공공데이터 전체 화장실을 가져와 upsert 처리하고 SyncLogEntity를 저장 후 반환한다.
-     * API 호출 실패 시 FAILED 상태의 SyncLogEntity를 저장하고 반환한다.
-     */
     fun getSyncLogs(n: Int = 10): List<SyncResultResponse> =
         syncLogRepository.findTopNByOrderByCreatedAtDesc(n).map {
             SyncResultResponse(
                 id = it.id,
                 status = it.status.name,
                 totalFetched = it.totalFetched,
-                upsertedCount = it.upsertedCount,
+                insertedCount = it.insertedCount,
+                updatedCount = it.updatedCount,
+                deletedCount = it.deletedCount,
                 failedCount = it.failedCount,
                 syncedAt = it.createdAt,
                 errorMessage = it.errorMessage,
             )
         }
 
-    /**
-     * @Transactional 범위 내에서 API 장애 시 early-return 으로 FAILED 로그를 저장한다.
-     * RuntimeException catch 후 syncLogRepository.save() 는 같은 트랜잭션 내에서 실행되어 원자성이 보장된다.
-     */
     @Transactional
     fun syncAll(): SyncLogEntity {
         log.info("공공 화장실 데이터 동기화 시작")
 
-        // API 호출 실패 시 FAILED 로그 저장 후 early-return
         val fetchResult = try {
             toiletDataPort.fetchAllToilets()
         } catch (e: RuntimeException) {
@@ -50,7 +43,9 @@ class ToiletSyncService(
             return syncLogRepository.save(
                 SyncLogEntity(
                     totalFetched = 0,
-                    upsertedCount = 0,
+                    insertedCount = 0,
+                    updatedCount = 0,
+                    deletedCount = 0,
                     failedCount = 0,
                     status = SyncStatus.FAILED,
                     errorMessage = e.message,
@@ -59,17 +54,16 @@ class ToiletSyncService(
         }
 
         val externalData = fetchResult.items
-        // I7: 파싱 실패 건수를 failedCount 에 포함
         val totalFetched = externalData.size + fetchResult.parseFailCount
         log.info("공공 화장실 데이터 조회 완료: 정상={}건, 파싱실패={}건", externalData.size, fetchResult.parseFailCount)
 
-        // I5: 배치 조회로 N+1 제거
         val addresses = externalData.map { it.address }
         val existingByAddress = toiletRepository.findAllByAddressIn(addresses)
             .associateBy { it.address }
 
         val toSave = mutableListOf<ToiletEntity>()
-        var upsertedCount = 0
+        var insertedCount = 0
+        var updatedCount = 0
         var failedCount = fetchResult.parseFailCount
 
         for (data in externalData) {
@@ -86,6 +80,7 @@ class ToiletSyncService(
                     existing.isPublic = true
                     existing.status = ToiletStatus.ACTIVE
                     toSave.add(existing)
+                    updatedCount++
                 } else {
                     toSave.add(
                         ToiletEntity(
@@ -101,8 +96,8 @@ class ToiletSyncService(
                             status = ToiletStatus.ACTIVE,
                         ),
                     )
+                    insertedCount++
                 }
-                upsertedCount++
             } catch (e: Exception) {
                 log.error("화장실 upsert 준비 실패: address={}, error={}", data.address, e.message)
                 failedCount++
@@ -111,23 +106,36 @@ class ToiletSyncService(
 
         toiletRepository.saveAll(toSave)
 
+        // CSV에서 사라진 공공데이터 항목 삭제 (reportedBy=null이고 ACTIVE인 것 중 이번 CSV에 없는 것)
+        val deletedCount = if (addresses.isNotEmpty()) {
+            val stale = toiletRepository.findAllActivePublicNotInAddresses(addresses)
+            toiletRepository.deleteAll(stale)
+            log.info("공공 화장실 삭제: {}건", stale.size)
+            stale.size
+        } else {
+            0
+        }
+
         val status = when {
+            failedCount == 0 && deletedCount == 0 -> SyncStatus.SUCCESS
             failedCount == 0 -> SyncStatus.SUCCESS
-            upsertedCount == 0 -> SyncStatus.FAILED
+            insertedCount + updatedCount == 0 -> SyncStatus.FAILED
             else -> SyncStatus.PARTIAL
         }
 
         val syncLog = SyncLogEntity(
             totalFetched = totalFetched,
-            upsertedCount = upsertedCount,
+            insertedCount = insertedCount,
+            updatedCount = updatedCount,
+            deletedCount = deletedCount,
             failedCount = failedCount,
             status = status,
         )
         val saved = syncLogRepository.save(syncLog)
 
         log.info(
-            "공공 화장실 데이터 동기화 완료: total={}, upserted={}, failed={}, status={}",
-            totalFetched, upsertedCount, failedCount, status,
+            "공공 화장실 동기화 완료: total={}, inserted={}, updated={}, deleted={}, failed={}, status={}",
+            totalFetched, insertedCount, updatedCount, deletedCount, failedCount, status,
         )
         return saved
     }

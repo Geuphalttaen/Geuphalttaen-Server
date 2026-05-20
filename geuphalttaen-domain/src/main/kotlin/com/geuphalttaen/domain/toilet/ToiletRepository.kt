@@ -31,4 +31,12 @@ interface ToiletRepository {
      * 특정 상태의 화장실 수를 반환한다.
      */
     fun countByStatus(status: ToiletStatus): Long
+
+    /**
+     * 공공데이터 출처(reportedBy=null) ACTIVE 화장실 중 주어진 주소 목록에 없는 항목 조회.
+     * 동기화 후 CSV에서 사라진 항목 삭제 용도.
+     */
+    fun findAllActivePublicNotInAddresses(addresses: Collection<String>): List<ToiletEntity>
+
+    fun deleteAll(entities: List<ToiletEntity>)
 }

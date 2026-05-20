@@ -63,6 +63,11 @@ class ToiletRepositoryImpl(
 
     override fun countByStatus(status: ToiletStatus): Long = jpaRepository.countByStatus(status)
 
+    override fun findAllActivePublicNotInAddresses(addresses: Collection<String>): List<ToiletEntity> =
+        jpaRepository.findAllByReportedByIsNullAndStatusAndAddressNotIn(ToiletStatus.ACTIVE, addresses)
+
+    override fun deleteAll(entities: List<ToiletEntity>) = jpaRepository.deleteAll(entities)
+
     override fun findByStatusPageable(status: ToiletStatus?, pageable: Pageable): Page<ToiletEntity> {
         val toilet = QToiletEntity.toiletEntity
         val predicate = status?.let { toilet.status.eq(it) }
