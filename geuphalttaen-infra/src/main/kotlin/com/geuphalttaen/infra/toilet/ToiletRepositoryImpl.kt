@@ -54,6 +54,12 @@ class ToiletRepositoryImpl(
     override fun findByReportedByOrderByCreatedAtDesc(reportedBy: Long): List<ToiletEntity> =
         jpaRepository.findByReportedByOrderByCreatedAtDesc(reportedBy)
 
+    override fun countByReportedBy(reportedBy: Long): Long =
+        jpaRepository.countByReportedBy(reportedBy)
+
+    override fun countByReportedByAndStatus(reportedBy: Long, status: ToiletStatus): Long =
+        jpaRepository.countByReportedByAndStatus(reportedBy, status)
+
     override fun save(entity: ToiletEntity): ToiletEntity = jpaRepository.save(entity)
 
     override fun saveAll(entities: List<ToiletEntity>): List<ToiletEntity> = jpaRepository.saveAll(entities)

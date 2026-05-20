@@ -17,13 +17,13 @@ class UserService(
 
     fun getProfile(userId: Long): UserProfileResponse {
         val user = userRepository.findById(userId) ?: throw BusinessException(ErrorCode.USER_NOT_FOUND)
-        val reports = toiletRepository.findByReportedBy(userId)
-        val postedCount = reports.count { it.status == ToiletStatus.ACTIVE }
+        val reportCount = toiletRepository.countByReportedBy(userId)
+        val postedCount = toiletRepository.countByReportedByAndStatus(userId, ToiletStatus.ACTIVE)
         return UserProfileResponse(
             nickname = user.nickname,
             provider = user.provider.name,
-            reportCount = reports.size,
-            postedCount = postedCount,
+            reportCount = reportCount.toInt(),
+            postedCount = postedCount.toInt(),
         )
     }
 
