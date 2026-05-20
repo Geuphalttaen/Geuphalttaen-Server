@@ -24,7 +24,7 @@ data class AdminTokenResponse(
  */
 data class AdminSeedRequest(
     @field:Email @field:NotBlank val email: String,
-    @field:NotBlank @field:Size(min = 8) val password: String,
+    @field:NotBlank @field:Size(min = 8, max = 72) val password: String,
 )
 
 /**
