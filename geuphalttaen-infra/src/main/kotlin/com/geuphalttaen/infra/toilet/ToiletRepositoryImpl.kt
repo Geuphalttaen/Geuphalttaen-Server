@@ -17,14 +17,9 @@ class ToiletRepositoryImpl(
 
     private val queryFactory: JPAQueryFactory by lazy { JPAQueryFactory(em) }
 
-    /**
-     * MySQL ST_Distance_Sphere 함수를 사용한 근방 화장실 조회.
-     * QueryDSL 에서 네이티브 함수 호출은 Expressions.numberTemplate 활용.
-     */
     override fun findNearby(lat: Double, lng: Double, radiusMeters: Int): List<ToiletEntity> {
         val toilet = QToiletEntity.toiletEntity
 
-        // ST_Distance_Sphere returns distance in meters
         val distanceExpr = Expressions.numberTemplate(
             java.lang.Double::class.java,
             "ST_Distance_Sphere(POINT({0}, {1}), POINT({2}, {3}))",
@@ -48,11 +43,14 @@ class ToiletRepositoryImpl(
     override fun findAllByAddressIn(addresses: List<String>): List<ToiletEntity> =
         jpaRepository.findAllByAddressIn(addresses)
 
-    override fun findByReportedBy(reportedBy: Long): List<ToiletEntity> =
-        jpaRepository.findByReportedBy(reportedBy)
-
     override fun findByReportedByOrderByCreatedAtDesc(reportedBy: Long): List<ToiletEntity> =
         jpaRepository.findByReportedByOrderByCreatedAtDesc(reportedBy)
+
+    override fun countByReportedBy(reportedBy: Long): Long =
+        jpaRepository.countByReportedBy(reportedBy)
+
+    override fun countByReportedByAndStatus(reportedBy: Long, status: ToiletStatus): Long =
+        jpaRepository.countByReportedByAndStatus(reportedBy, status)
 
     override fun save(entity: ToiletEntity): ToiletEntity = jpaRepository.save(entity)
 

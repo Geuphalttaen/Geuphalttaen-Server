@@ -1,6 +1,7 @@
 package com.geuphalttaen.infra.kakao
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.geuphalttaen.domain.geocoding.GeocodingPort
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.body
@@ -18,14 +19,14 @@ private data class KakaoDocument(
 private data class KakaoAddress(val address_name: String?, val building_name: String?)
 
 @Component
-class KakaoGeocodingClient(private val kakaoMapsProperties: KakaoMapsProperties) {
+class KakaoGeocodingClient(private val kakaoMapsProperties: KakaoMapsProperties) : GeocodingPort {
 
     private val restClient = RestClient.builder()
         .baseUrl("https://dapi.kakao.com")
         .defaultHeader("Authorization", "KakaoAK ${kakaoMapsProperties.restKey}")
         .build()
 
-    fun reverseGeocode(lat: Double, lng: Double): String {
+    override fun reverseGeocode(lat: Double, lng: Double): String {
         val response = restClient.get()
             .uri("/v2/local/geo/coord2address.json?x={x}&y={y}&input_coord=WGS84", lng, lat)
             .retrieve()

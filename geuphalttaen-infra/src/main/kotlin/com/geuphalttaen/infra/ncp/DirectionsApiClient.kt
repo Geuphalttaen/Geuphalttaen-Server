@@ -3,17 +3,12 @@ package com.geuphalttaen.infra.ncp
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.geuphalttaen.common.exception.BusinessException
 import com.geuphalttaen.common.exception.ErrorCode
+import com.geuphalttaen.domain.navigation.DirectionsPort
+import com.geuphalttaen.domain.navigation.DirectionsResult
+import com.geuphalttaen.domain.navigation.LatLng
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.body
-
-data class DirectionsResult(
-    val path: List<LatLng>,
-    val distanceMeters: Int,
-    val durationMs: Int,
-)
-
-data class LatLng(val lat: Double, val lng: Double)
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 private data class NcpDirectionsResponse(val route: Map<String, List<RouteOption>>?)
@@ -25,7 +20,7 @@ private data class RouteOption(val summary: RouteSummary?, val path: List<List<D
 private data class RouteSummary(val distance: Int?, val duration: Int?)
 
 @Component
-class DirectionsApiClient(private val ncpProperties: NcpProperties) {
+class DirectionsApiClient(private val ncpProperties: NcpProperties) : DirectionsPort {
 
     private val restClient = RestClient.builder()
         .baseUrl("https://naveropenapi.apigw.ntruss.com")
@@ -33,7 +28,7 @@ class DirectionsApiClient(private val ncpProperties: NcpProperties) {
         .defaultHeader("X-NCP-APIGW-API-KEY", ncpProperties.clientSecret)
         .build()
 
-    fun getDirections(
+    override fun getDirections(
         startLat: Double, startLng: Double,
         endLat: Double, endLng: Double,
     ): DirectionsResult {
