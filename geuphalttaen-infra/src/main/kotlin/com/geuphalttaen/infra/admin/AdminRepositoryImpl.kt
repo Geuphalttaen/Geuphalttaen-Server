@@ -14,5 +14,7 @@ class AdminRepositoryImpl(
 
     override fun findByEmail(email: String): AdminEntity? = jpaRepository.findByEmail(email)
 
+    override fun existsAny(): Boolean = jpaRepository.count() > 0
+
     override fun save(entity: AdminEntity): AdminEntity = jpaRepository.save(entity)
 }

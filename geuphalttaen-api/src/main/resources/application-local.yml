@@ -20,3 +20,6 @@ spring:
 
 jwt:
   secret: local-dev-secret-key-must-be-at-least-32-characters-long
+
+admin:
+  seed-secret: ${ADMIN_SEED_SECRET:local-dev-seed-secret}

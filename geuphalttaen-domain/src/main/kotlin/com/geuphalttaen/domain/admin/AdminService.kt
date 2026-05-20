@@ -2,6 +2,7 @@ package com.geuphalttaen.domain.admin
 
 import com.geuphalttaen.common.exception.BusinessException
 import com.geuphalttaen.common.exception.ErrorCode
+import com.geuphalttaen.core.entity.AdminEntity
 import com.geuphalttaen.core.entity.ToiletStatus
 import com.geuphalttaen.domain.auth.JwtProvider
 import com.geuphalttaen.domain.toilet.AdminToiletResponse
@@ -24,6 +25,7 @@ class AdminService(
     private val toiletRepository: ToiletRepository,
     private val jwtProvider: JwtProvider,
     private val passwordEncoder: PasswordEncoder,
+    private val adminProperties: AdminProperties,
 ) {
 
     /**
@@ -41,6 +43,25 @@ class AdminService(
 
         val accessToken = jwtProvider.generateAdminAccessToken(admin.id)
         return AdminTokenResponse(accessToken = accessToken)
+    }
+
+    /**
+     * 최초 관리자 계정 시딩.
+     * 관리자가 한 명도 없을 때만 허용하며, X-Seed-Secret 헤더 값이 admin.seedSecret 설정과 일치해야 한다.
+     */
+    @Transactional
+    fun seedAdmin(seedSecret: String, request: AdminSeedRequest) {
+        if (seedSecret != adminProperties.seedSecret || adminProperties.seedSecret.isBlank()) {
+            throw BusinessException(ErrorCode.ADMIN_SEED_FORBIDDEN)
+        }
+        if (adminRepository.existsAny()) {
+            throw BusinessException(ErrorCode.ADMIN_ALREADY_EXISTS)
+        }
+        val entity = AdminEntity(
+            email = request.email,
+            passwordHash = passwordEncoder.encode(request.password),
+        )
+        adminRepository.save(entity)
     }
 
     // ────────────────────────────────────────────

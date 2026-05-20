@@ -7,5 +7,6 @@ import com.geuphalttaen.core.entity.AdminEntity
  */
 interface AdminRepository {
     fun findByEmail(email: String): AdminEntity?
+    fun existsAny(): Boolean
     fun save(entity: AdminEntity): AdminEntity
 }

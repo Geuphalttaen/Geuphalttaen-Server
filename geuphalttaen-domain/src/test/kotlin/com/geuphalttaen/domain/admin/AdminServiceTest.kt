@@ -40,12 +40,19 @@ class AdminServiceTest {
     private lateinit var passwordEncoder: BCryptPasswordEncoder
 
     private val testSecret = "test-secret-key-must-be-at-least-32-characters-long-for-hmac"
+    private val testSeedSecret = "test-seed-secret"
 
     @BeforeEach
     fun setUp() {
         jwtProvider = JwtProvider(JwtProperties(secret = testSecret))
         passwordEncoder = BCryptPasswordEncoder()
-        adminService = AdminService(adminRepository, toiletRepository, jwtProvider, passwordEncoder)
+        adminService = AdminService(
+            adminRepository,
+            toiletRepository,
+            jwtProvider,
+            passwordEncoder,
+            AdminProperties(seedSecret = testSeedSecret),
+        )
     }
 
     // ────────────────────────────────────────────
@@ -296,6 +303,43 @@ class AdminServiceTest {
             .isInstanceOf(BusinessException::class.java)
             .extracting { (it as BusinessException).errorCode }
             .isEqualTo(ErrorCode.TOILET_NOT_FOUND)
+    }
+
+    // ────────────────────────────────────────────
+    // seedAdmin
+    // ────────────────────────────────────────────
+
+    @Test
+    fun `seedAdmin - 시크릿이 맞고 관리자가 없으면 계정을 생성한다`() {
+        val request = AdminSeedRequest(email = "seed@test.com", password = "password123")
+        `when`(adminRepository.existsAny()).thenReturn(false)
+        `when`(adminRepository.save(anyNonNull(AdminEntity::class.java)))
+            .thenAnswer { it.arguments[0] as AdminEntity }
+
+        adminService.seedAdmin(testSeedSecret, request)
+
+        verify(adminRepository).save(anyNonNull(AdminEntity::class.java))
+    }
+
+    @Test
+    fun `seedAdmin - 잘못된 시크릿이면 ADMIN_SEED_FORBIDDEN 예외를 던진다`() {
+        val request = AdminSeedRequest(email = "seed@test.com", password = "password123")
+
+        assertThatThrownBy { adminService.seedAdmin("wrong-secret", request) }
+            .isInstanceOf(BusinessException::class.java)
+            .extracting { (it as BusinessException).errorCode }
+            .isEqualTo(ErrorCode.ADMIN_SEED_FORBIDDEN)
+    }
+
+    @Test
+    fun `seedAdmin - 이미 관리자가 존재하면 ADMIN_ALREADY_EXISTS 예외를 던진다`() {
+        val request = AdminSeedRequest(email = "seed@test.com", password = "password123")
+        `when`(adminRepository.existsAny()).thenReturn(true)
+
+        assertThatThrownBy { adminService.seedAdmin(testSeedSecret, request) }
+            .isInstanceOf(BusinessException::class.java)
+            .extracting { (it as BusinessException).errorCode }
+            .isEqualTo(ErrorCode.ADMIN_ALREADY_EXISTS)
     }
 
     // ────────────────────────────────────────────
