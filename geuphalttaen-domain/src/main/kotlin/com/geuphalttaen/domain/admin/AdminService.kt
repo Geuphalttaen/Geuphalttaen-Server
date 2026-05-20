@@ -51,7 +51,7 @@ class AdminService(
      */
     @Transactional
     fun seedAdmin(seedSecret: String, request: AdminSeedRequest) {
-        if (seedSecret != adminProperties.seedSecret || adminProperties.seedSecret.isBlank()) {
+        if (adminProperties.seedSecret.isBlank() || seedSecret != adminProperties.seedSecret) {
             throw BusinessException(ErrorCode.ADMIN_SEED_FORBIDDEN)
         }
         if (adminRepository.existsAny()) {

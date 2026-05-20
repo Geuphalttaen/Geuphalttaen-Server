@@ -11,8 +11,5 @@ interface ToiletJpaRepository : JpaRepository<ToiletEntity, Long> {
     fun countByReportedBy(reportedBy: Long): Long
     fun countByReportedByAndStatus(reportedBy: Long, status: ToiletStatus): Long
     fun countByStatus(status: ToiletStatus): Long
-    fun findAllByReportedByIsNullAndStatusAndAddressNotIn(
-        status: ToiletStatus,
-        addresses: Collection<String>,
-    ): List<ToiletEntity>
+    fun findAllByReportedByIsNullAndStatus(status: ToiletStatus): List<ToiletEntity>
 }

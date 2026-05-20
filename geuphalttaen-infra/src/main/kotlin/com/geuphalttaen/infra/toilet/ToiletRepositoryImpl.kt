@@ -63,8 +63,8 @@ class ToiletRepositoryImpl(
 
     override fun countByStatus(status: ToiletStatus): Long = jpaRepository.countByStatus(status)
 
-    override fun findAllActivePublicNotInAddresses(addresses: Collection<String>): List<ToiletEntity> =
-        jpaRepository.findAllByReportedByIsNullAndStatusAndAddressNotIn(ToiletStatus.ACTIVE, addresses)
+    override fun findAllActivePublic(): List<ToiletEntity> =
+        jpaRepository.findAllByReportedByIsNullAndStatus(ToiletStatus.ACTIVE)
 
     override fun deleteAll(entities: List<ToiletEntity>) = jpaRepository.deleteAll(entities)
 
