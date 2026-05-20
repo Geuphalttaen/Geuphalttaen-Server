@@ -30,6 +30,7 @@ class AdminService(
      * 관리자 이메일/패스워드 로그인.
      * BCrypt 검증 후 ROLE_ADMIN 클레임이 포함된 JWT를 발급한다.
      */
+    @Transactional(readOnly = true)
     fun login(request: AdminLoginRequest): AdminTokenResponse {
         val admin = adminRepository.findByEmail(request.email)
             ?: throw BusinessException(ErrorCode.ADMIN_INVALID_CREDENTIALS)
@@ -50,6 +51,7 @@ class AdminService(
      * 제보 목록 페이징 조회.
      * status 필터가 없으면 전체를 반환한다.
      */
+    @Transactional(readOnly = true)
     fun getReports(status: ToiletStatus?, pageable: Pageable): Page<AdminToiletResponse> {
         val entities = toiletRepository.findByStatusPageable(status, pageable)
         return entities.map { it.toAdminResponse() }
@@ -58,6 +60,7 @@ class AdminService(
     /**
      * 제보 단건 조회.
      */
+    @Transactional(readOnly = true)
     fun getReport(id: Long): AdminToiletResponse {
         val entity = toiletRepository.findById(id) ?: throw BusinessException(ErrorCode.TOILET_NOT_FOUND)
         return entity.toAdminResponse()
@@ -73,8 +76,7 @@ class AdminService(
             throw BusinessException(ErrorCode.TOILET_STATUS_INVALID)
         }
         entity.status = ToiletStatus.ACTIVE
-        val saved = toiletRepository.save(entity)
-        return saved.toAdminResponse()
+        return entity.toAdminResponse()
     }
 
     /**
@@ -87,8 +89,7 @@ class AdminService(
             throw BusinessException(ErrorCode.TOILET_STATUS_INVALID)
         }
         entity.status = ToiletStatus.REJECTED
-        val saved = toiletRepository.save(entity)
-        return saved.toAdminResponse()
+        return entity.toAdminResponse()
     }
 
     // ────────────────────────────────────────────
@@ -98,6 +99,7 @@ class AdminService(
     /**
      * 화장실 목록 검색 (키워드: 이름 또는 주소 포함).
      */
+    @Transactional(readOnly = true)
     fun getToilets(keyword: String?, pageable: Pageable): Page<AdminToiletResponse> {
         val entities = toiletRepository.findByKeywordPageable(keyword, pageable)
         return entities.map { it.toAdminResponse() }
@@ -106,6 +108,7 @@ class AdminService(
     /**
      * 화장실 단건 조회.
      */
+    @Transactional(readOnly = true)
     fun getToilet(id: Long): AdminToiletResponse {
         val entity = toiletRepository.findById(id) ?: throw BusinessException(ErrorCode.TOILET_NOT_FOUND)
         return entity.toAdminResponse()
@@ -113,6 +116,7 @@ class AdminService(
 
     /**
      * 화장실 정보 수정.
+     * 더티 체킹으로 자동 반영되므로 명시적 save() 호출이 불필요하다.
      */
     @Transactional
     fun updateToilet(id: Long, request: AdminToiletUpdateRequest): AdminToiletResponse {
@@ -126,8 +130,7 @@ class AdminService(
         request.female?.let { entity.female = it }
         request.disabled?.let { entity.disabled = it }
         request.familyRoom?.let { entity.familyRoom = it }
-        val saved = toiletRepository.save(entity)
-        return saved.toAdminResponse()
+        return entity.toAdminResponse()
     }
 
     /**

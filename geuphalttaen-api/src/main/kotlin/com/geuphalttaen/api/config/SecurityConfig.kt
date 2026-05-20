@@ -87,10 +87,14 @@ class JwtAuthenticationFilter(
     ) {
         val token = resolveToken(request)
         if (token != null && jwtProvider.isValid(token)) {
-            val userId = jwtProvider.getUserId(token)
-            val roles = jwtProvider.getRoles(token)
-            val auth = JwtAuthentication(userId, roles)
-            SecurityContextHolder.getContext().authentication = auth
+            val tokenType = jwtProvider.getTokenType(token)
+            // REFRESH 토큰 등 비정상 타입으로 API 인증을 시도하는 경우를 차단한다
+            if (tokenType == "ACCESS" || tokenType == "ADMIN_ACCESS") {
+                val userId = jwtProvider.getUserId(token)
+                val roles = jwtProvider.getRoles(token)
+                val auth = JwtAuthentication(userId, roles)
+                SecurityContextHolder.getContext().authentication = auth
+            }
         }
         filterChain.doFilter(request, response)
     }

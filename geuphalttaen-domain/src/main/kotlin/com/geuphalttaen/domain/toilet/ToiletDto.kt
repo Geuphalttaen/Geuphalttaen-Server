@@ -2,6 +2,9 @@ package com.geuphalttaen.domain.toilet
 
 import com.geuphalttaen.core.entity.ToiletEntity
 import com.geuphalttaen.core.entity.ToiletStatus
+import jakarta.validation.constraints.DecimalMax
+import jakarta.validation.constraints.DecimalMin
+import jakarta.validation.constraints.Size
 import java.time.LocalDateTime
 
 data class ToiletSearchRequest(
@@ -61,10 +64,10 @@ data class AdminToiletResponse(
  * null인 필드는 수정하지 않는다.
  */
 data class AdminToiletUpdateRequest(
-    val name: String? = null,
-    val address: String? = null,
-    val lat: Double? = null,
-    val lng: Double? = null,
+    @field:Size(min = 1, max = 100) val name: String? = null,
+    @field:Size(min = 1, max = 255) val address: String? = null,
+    @field:DecimalMin("-90.0") @field:DecimalMax("90.0") val lat: Double? = null,
+    @field:DecimalMin("-180.0") @field:DecimalMax("180.0") val lng: Double? = null,
     val isPublic: Boolean? = null,
     val male: Boolean? = null,
     val female: Boolean? = null,

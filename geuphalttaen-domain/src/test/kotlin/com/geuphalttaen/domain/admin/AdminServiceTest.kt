@@ -146,12 +146,10 @@ class AdminServiceTest {
     fun `approveReport - PENDING 제보를 ACTIVE로 변경한다`() {
         val entity = makeToiletEntity(id = 10L, status = ToiletStatus.PENDING)
         `when`(toiletRepository.findById(10L)).thenReturn(entity)
-        `when`(toiletRepository.save(entity)).thenReturn(entity)
 
         val result = adminService.approveReport(10L)
 
         assertThat(result.status).isEqualTo(ToiletStatus.ACTIVE)
-        verify(toiletRepository).save(entity)
     }
 
     @Test
@@ -179,12 +177,10 @@ class AdminServiceTest {
     fun `rejectReport - PENDING 제보를 REJECTED로 변경한다`() {
         val entity = makeToiletEntity(id = 20L, status = ToiletStatus.PENDING)
         `when`(toiletRepository.findById(20L)).thenReturn(entity)
-        `when`(toiletRepository.save(entity)).thenReturn(entity)
 
         val result = adminService.rejectReport(20L)
 
         assertThat(result.status).isEqualTo(ToiletStatus.REJECTED)
-        verify(toiletRepository).save(entity)
     }
 
     @Test
@@ -261,12 +257,10 @@ class AdminServiceTest {
         val entity = makeToiletEntity(id = 40L)
         val request = com.geuphalttaen.domain.toilet.AdminToiletUpdateRequest(name = "수정된 화장실")
         `when`(toiletRepository.findById(40L)).thenReturn(entity)
-        `when`(toiletRepository.save(entity)).thenReturn(entity)
 
         val result = adminService.updateToilet(40L, request)
 
         assertThat(result.name).isEqualTo("수정된 화장실")
-        verify(toiletRepository).save(entity)
     }
 
     @Test

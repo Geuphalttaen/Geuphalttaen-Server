@@ -23,8 +23,9 @@ class JwtProvider(
 
     /**
      * 관리자용 Access Token 발급 (ROLE_ADMIN 권한 포함).
+     * type 클레임을 "ADMIN_ACCESS"로 설정하여 일반 Access Token과 구분한다.
      */
-    fun generateAdminAccessToken(adminId: Long): String = buildToken(adminId, accessTokenExpiryMs, "ACCESS", listOf("ROLE_ADMIN"))
+    fun generateAdminAccessToken(adminId: Long): String = buildToken(adminId, accessTokenExpiryMs, "ADMIN_ACCESS", listOf("ROLE_ADMIN"))
 
     fun getUserId(token: String): Long {
         val claims = Jwts.parser()

@@ -7,9 +7,12 @@ import com.geuphalttaen.domain.toilet.AdminToiletUpdateRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.validation.Valid
+import jakarta.validation.constraints.Max
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.HttpStatus
+import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
@@ -27,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController
 @SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/v1/admin/toilets")
+@Validated
 class AdminToiletController(
     private val adminService: AdminService,
 ) {
@@ -36,7 +40,7 @@ class AdminToiletController(
     fun getToilets(
         @RequestParam(required = false) keyword: String?,
         @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "20") size: Int,
+        @RequestParam(defaultValue = "20") @Max(100) size: Int,
     ): ApiResponse<Page<AdminToiletResponse>> {
         val pageable = PageRequest.of(page, size)
         return ApiResponse.ok(adminService.getToilets(keyword, pageable))
@@ -51,15 +55,14 @@ class AdminToiletController(
     @PatchMapping("/{id}")
     fun updateToilet(
         @PathVariable id: Long,
-        @RequestBody request: AdminToiletUpdateRequest,
+        @Valid @RequestBody request: AdminToiletUpdateRequest,
     ): ApiResponse<AdminToiletResponse> =
         ApiResponse.ok(adminService.updateToilet(id, request))
 
     @Operation(summary = "화장실 삭제")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun deleteToilet(@PathVariable id: Long): ApiResponse<Unit> {
+    fun deleteToilet(@PathVariable id: Long) {
         adminService.deleteToilet(id)
-        return ApiResponse.ok()
     }
 }
