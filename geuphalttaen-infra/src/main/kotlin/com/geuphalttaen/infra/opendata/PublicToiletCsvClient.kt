@@ -23,18 +23,40 @@ open class PublicToiletCsvClient(
 
     private val log = LoggerFactory.getLogger(javaClass)
 
+    companion object {
+        private const val PAGE_URL = "https://file.localdata.go.kr/file/public_restroom_info/info"
+        private const val USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+    }
+
     /** 테스트에서 오버라이드 가능하도록 open으로 노출 */
     open fun openCsvStream(): Pair<InputStream, Charset> {
-        val connection = URI(properties.csvUrl).toURL().openConnection() as HttpURLConnection
-        connection.setRequestProperty("User-Agent", "Mozilla/5.0")
-        connection.connect()
+        // 1단계: 페이지 방문으로 세션 쿠키(XSRF-TOKEN, WMONID) 획득
+        val pageConn = URI(PAGE_URL).toURL().openConnection() as HttpURLConnection
+        pageConn.setRequestProperty("User-Agent", USER_AGENT)
+        pageConn.setRequestProperty("Accept", "text/html,application/xhtml+xml,*/*;q=0.8")
+        pageConn.setRequestProperty("Accept-Language", "ko,en-US;q=0.9,en;q=0.8")
+        pageConn.connect()
+        val cookies = pageConn.headerFields["Set-Cookie"]
+            ?.joinToString("; ") { it.substringBefore(";") }
+            ?: ""
+        pageConn.disconnect()
 
-        val charset = connection.contentType
-            ?.let { Regex("charset=([\\w-]+)", RegexOption.IGNORE_CASE).find(it)?.groupValues?.get(1) }
-            ?.let { runCatching { Charset.forName(it) }.getOrNull() }
-            ?: Charset.forName("EUC-KR")
+        // 2단계: 쿠키 + same-origin Referer 로 CSV 다운로드
+        val dlConn = URI(properties.csvUrl).toURL().openConnection() as HttpURLConnection
+        dlConn.instanceFollowRedirects = true
+        dlConn.setRequestProperty("User-Agent", USER_AGENT)
+        dlConn.setRequestProperty("Referer", PAGE_URL)
+        dlConn.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+        dlConn.setRequestProperty("Accept-Language", "ko,en-US;q=0.9,en;q=0.8")
+        if (cookies.isNotEmpty()) dlConn.setRequestProperty("Cookie", cookies)
+        dlConn.connect()
 
-        return connection.inputStream to charset
+        val code = dlConn.responseCode
+        if (code != HttpURLConnection.HTTP_OK) {
+            throw RuntimeException("CSV 다운로드 실패: HTTP $code (${properties.csvUrl})")
+        }
+
+        return dlConn.inputStream to Charset.forName("EUC-KR")
     }
 
     override fun fetchAllToilets(): ToiletFetchResult {
