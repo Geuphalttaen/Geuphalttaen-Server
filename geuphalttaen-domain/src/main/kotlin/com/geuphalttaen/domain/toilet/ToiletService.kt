@@ -3,22 +3,37 @@ package com.geuphalttaen.domain.toilet
 import com.geuphalttaen.common.exception.BusinessException
 import com.geuphalttaen.common.exception.ErrorCode
 import com.geuphalttaen.core.entity.ToiletEntity
+import com.geuphalttaen.core.entity.ToiletImageEntity
 import com.geuphalttaen.core.entity.ToiletStatus
+import com.geuphalttaen.domain.image.ImageStoragePort
+import com.geuphalttaen.domain.image.PresignedUploadResult
 import org.springframework.stereotype.Service
+import java.util.UUID
 import kotlin.math.*
 
 @Service
 class ToiletService(
     private val toiletRepository: ToiletRepository,
+    private val imageStoragePort: ImageStoragePort,
 ) {
     fun searchNearby(request: ToiletSearchRequest): List<ToiletResponse> {
         val entities = toiletRepository.findNearby(request.lat, request.lng, request.radiusMeters)
-        return entities.map { it.toResponse(request.lat, request.lng) }
+        val toiletIds = entities.map { it.id }
+        val imageMap = toiletRepository.findImagesByToiletIds(toiletIds)
+            .groupBy({ it.toiletId }, { it.url })
+        return entities.map { it.toResponse(request.lat, request.lng, imageMap[it.id] ?: emptyList()) }
     }
 
     fun getById(id: Long): ToiletResponse {
         val entity = toiletRepository.findById(id) ?: throw BusinessException(ErrorCode.TOILET_NOT_FOUND)
-        return entity.toResponse()
+        val images = toiletRepository.findImagesByToiletId(id).map { it.url }
+        return entity.toResponse(imageUrls = images)
+    }
+
+    fun presignImageUpload(contentType: String): PresignedUploadResult {
+        val ext = contentType.substringAfter("/")
+        val objectKey = "toilet-images/${UUID.randomUUID()}.$ext"
+        return imageStoragePort.generatePresignedPutUrl(objectKey, contentType)
     }
 
     fun report(userId: Long, request: ToiletReportRequest): ToiletResponse {
@@ -36,10 +51,19 @@ class ToiletService(
             status = ToiletStatus.PENDING,
         )
         val saved = toiletRepository.save(entity)
-        return saved.toResponse(request.lat, request.lng)
+
+        val images = if (request.imageUrls.isNotEmpty()) {
+            toiletRepository.saveImages(request.imageUrls.map { ToiletImageEntity(toiletId = saved.id, url = it) })
+        } else emptyList()
+
+        return saved.toResponse(request.lat, request.lng, images.map { it.url })
     }
 
-    private fun ToiletEntity.toResponse(fromLat: Double? = null, fromLng: Double? = null): ToiletResponse =
+    private fun ToiletEntity.toResponse(
+        fromLat: Double? = null,
+        fromLng: Double? = null,
+        imageUrls: List<String> = emptyList(),
+    ): ToiletResponse =
         ToiletResponse(
             id = id,
             name = name,
@@ -52,6 +76,7 @@ class ToiletService(
             disabled = disabled,
             familyRoom = familyRoom,
             isPublic = isPublic,
+            imageUrls = imageUrls,
         )
 
     private fun haversineMeters(lat1: Double, lng1: Double, lat2: Double, lng2: Double): Double {

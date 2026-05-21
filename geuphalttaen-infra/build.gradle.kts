@@ -35,6 +35,11 @@ dependencies {
     // CSV 파싱
     implementation("com.opencsv:opencsv:5.9")
 
+    // Cloudflare R2 (AWS SDK S3 호환)
+    implementation(platform("software.amazon.awssdk:bom:2.25.60"))
+    implementation("software.amazon.awssdk:s3")
+    implementation("software.amazon.awssdk:s3-transfer-manager")
+
     runtimeOnly("com.mysql:mysql-connector-j")
 
     // Test

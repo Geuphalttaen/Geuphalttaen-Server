@@ -35,4 +35,7 @@ enum class ErrorCode(
     TOILET_STATUS_INVALID("AD003", HttpStatus.BAD_REQUEST, "해당 상태로 변경할 수 없습니다."),
     ADMIN_ALREADY_EXISTS("AD004", HttpStatus.CONFLICT, "이미 관리자 계정이 존재합니다."),
     ADMIN_SEED_FORBIDDEN("AD005", HttpStatus.FORBIDDEN, "시드 시크릿이 올바르지 않습니다."),
+
+    // 이미지 에러
+    IMAGE_UPLOAD_FAILED("IMG001", HttpStatus.INTERNAL_SERVER_ERROR, "이미지 업로드 URL 발급에 실패했습니다."),
 }

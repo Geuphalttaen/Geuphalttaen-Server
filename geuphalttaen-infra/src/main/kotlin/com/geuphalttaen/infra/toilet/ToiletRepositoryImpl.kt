@@ -2,6 +2,7 @@ package com.geuphalttaen.infra.toilet
 
 import com.geuphalttaen.core.entity.QToiletEntity
 import com.geuphalttaen.core.entity.ToiletEntity
+import com.geuphalttaen.core.entity.ToiletImageEntity
 import com.geuphalttaen.core.entity.ToiletStatus
 import com.geuphalttaen.domain.toilet.ToiletRepository
 import com.querydsl.core.types.dsl.Expressions
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Repository
 @Repository
 class ToiletRepositoryImpl(
     private val jpaRepository: ToiletJpaRepository,
+    private val imageJpaRepository: ToiletImageJpaRepository,
     private val em: EntityManager,
 ) : ToiletRepository {
 
@@ -67,6 +69,15 @@ class ToiletRepositoryImpl(
         jpaRepository.findAllByReportedByIsNullAndStatus(ToiletStatus.ACTIVE)
 
     override fun deleteAll(entities: List<ToiletEntity>) = jpaRepository.deleteAll(entities)
+
+    override fun saveImages(images: List<ToiletImageEntity>): List<ToiletImageEntity> =
+        imageJpaRepository.saveAll(images)
+
+    override fun findImagesByToiletId(toiletId: Long): List<ToiletImageEntity> =
+        imageJpaRepository.findAllByToiletId(toiletId)
+
+    override fun findImagesByToiletIds(toiletIds: List<Long>): List<ToiletImageEntity> =
+        if (toiletIds.isEmpty()) emptyList() else imageJpaRepository.findAllByToiletIdIn(toiletIds)
 
     override fun findByStatusPageable(status: ToiletStatus?, pageable: Pageable): Page<ToiletEntity> {
         val toilet = QToiletEntity.toiletEntity

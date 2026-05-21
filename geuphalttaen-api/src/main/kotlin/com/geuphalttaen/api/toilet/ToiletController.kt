@@ -1,6 +1,8 @@
 package com.geuphalttaen.api.toilet
 
 import com.geuphalttaen.common.response.ApiResponse
+import com.geuphalttaen.domain.toilet.ImagePresignRequest
+import com.geuphalttaen.domain.toilet.ImagePresignResponse
 import com.geuphalttaen.domain.toilet.ToiletReportRequest
 import com.geuphalttaen.domain.toilet.ToiletResponse
 import com.geuphalttaen.domain.toilet.ToiletSearchRequest
@@ -31,6 +33,22 @@ class ToiletController(
     @GetMapping("/{id}")
     fun getById(@PathVariable id: Long): ApiResponse<ToiletResponse> {
         return ApiResponse.ok(toiletService.getById(id))
+    }
+
+    @Operation(summary = "이미지 업로드용 Presigned URL 발급 (인증 필요)")
+    @PostMapping("/images/presign")
+    fun presignImageUpload(
+        @AuthenticationPrincipal userId: Long,
+        @Valid @RequestBody request: ImagePresignRequest,
+    ): ApiResponse<ImagePresignResponse> {
+        val result = toiletService.presignImageUpload(request.contentType)
+        return ApiResponse.ok(
+            ImagePresignResponse(
+                presignedUrl = result.presignedUrl,
+                objectKey = result.objectKey,
+                publicUrl = result.publicUrl,
+            ),
+        )
     }
 
     @Operation(summary = "화장실 제보 (인증 필요)")
