@@ -1,18 +1,16 @@
 package com.geuphalttaen.infra.r2
 
 import com.geuphalttaen.domain.image.ImageStoragePort
-import com.geuphalttaen.domain.image.PresignedUploadResult
+import jakarta.annotation.PostConstruct
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.stereotype.Component
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
+import software.amazon.awssdk.core.sync.RequestBody
 import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
-import software.amazon.awssdk.services.s3.presigner.S3Presigner
-import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest
-import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest
 import java.net.URI
-import java.time.Duration
 
 @Component
 @EnableConfigurationProperties(CloudflareR2Properties::class)
@@ -20,8 +18,17 @@ class CloudflareR2Client(
     private val properties: CloudflareR2Properties,
 ) : ImageStoragePort {
 
-    private val presigner: S3Presigner by lazy {
-        S3Presigner.builder()
+    @PostConstruct
+    fun validate() {
+        require(properties.accountId.isNotBlank()) { "cloudflare.r2.account-id must not be blank" }
+        require(properties.accessKeyId.isNotBlank()) { "cloudflare.r2.access-key-id must not be blank" }
+        require(properties.secretAccessKey.isNotBlank()) { "cloudflare.r2.secret-access-key must not be blank" }
+        require(properties.bucketName.isNotBlank()) { "cloudflare.r2.bucket-name must not be blank" }
+        require(properties.publicUrl.isNotBlank()) { "cloudflare.r2.public-url must not be blank" }
+    }
+
+    private val s3Client: S3Client by lazy {
+        S3Client.builder()
             .endpointOverride(URI.create("https://${properties.accountId}.r2.cloudflarestorage.com"))
             .credentialsProvider(
                 StaticCredentialsProvider.create(
@@ -32,28 +39,18 @@ class CloudflareR2Client(
             .build()
     }
 
-    override fun generatePresignedPutUrl(
-        objectKey: String,
-        contentType: String,
-        expiresInSeconds: Long,
-    ): PresignedUploadResult {
-        val putRequest = PutObjectRequest.builder()
-            .bucket(properties.bucketName)
-            .key(objectKey)
-            .contentType(contentType)
-            .build()
-
-        val presignRequest = PutObjectPresignRequest.builder()
-            .signatureDuration(Duration.ofSeconds(expiresInSeconds))
-            .putObjectRequest(putRequest)
-            .build()
-
-        val presigned: PresignedPutObjectRequest = presigner.presignPutObject(presignRequest)
-
-        return PresignedUploadResult(
-            presignedUrl = presigned.url().toString(),
-            objectKey = objectKey,
-            publicUrl = "${properties.publicUrl.trimEnd('/')}/$objectKey",
+    override fun upload(objectKey: String, contentType: String, data: ByteArray): String {
+        s3Client.putObject(
+            PutObjectRequest.builder()
+                .bucket(properties.bucketName)
+                .key(objectKey)
+                .contentType(contentType)
+                .build(),
+            RequestBody.fromBytes(data),
         )
+        return "${properties.publicUrl.trimEnd('/')}/$objectKey"
     }
+
+    override fun isOwnUrl(url: String): Boolean =
+        url.startsWith(properties.publicUrl.trimEnd('/'))
 }

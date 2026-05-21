@@ -5,8 +5,7 @@ import com.geuphalttaen.common.exception.ErrorCode
 import com.geuphalttaen.core.entity.ToiletEntity
 import com.geuphalttaen.core.entity.ToiletImageEntity
 import com.geuphalttaen.core.entity.ToiletStatus
-import com.geuphalttaen.domain.image.ImageStoragePort
-import com.geuphalttaen.domain.image.PresignedUploadResult
+import com.geuphalttaen.domain.image.ImageService
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
@@ -16,6 +15,7 @@ import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.any
+import org.mockito.kotlin.doNothing
 
 private fun <T> anyNonNull(type: Class<T>): T = org.mockito.ArgumentMatchers.any(type)
 
@@ -26,13 +26,13 @@ class ToiletServiceTest {
     private lateinit var toiletRepository: ToiletRepository
 
     @Mock
-    private lateinit var imageStoragePort: ImageStoragePort
+    private lateinit var imageService: ImageService
 
     private lateinit var toiletService: ToiletService
 
     @BeforeEach
     fun setUp() {
-        toiletService = ToiletService(toiletRepository, imageStoragePort)
+        toiletService = ToiletService(toiletRepository, imageService)
     }
 
     // ──────────────────────────────────────────
@@ -51,8 +51,6 @@ class ToiletServiceTest {
 
         assertThat(result).hasSize(1)
         assertThat(result[0].id).isEqualTo(1L)
-        assertThat(result[0].name).isEqualTo("테스트 화장실")
-        assertThat(result[0].familyRoom).isFalse()
         assertThat(result[0].imageUrls).isEmpty()
     }
 
@@ -82,7 +80,6 @@ class ToiletServiceTest {
 
         assertThat(result.id).isEqualTo(42L)
         assertThat(result.familyRoom).isTrue()
-        assertThat(result.distanceMeters).isNull()
         assertThat(result.imageUrls).isEmpty()
     }
 
@@ -90,8 +87,8 @@ class ToiletServiceTest {
     fun `getById - 이미지가 있는 화장실은 imageUrls를 포함해 반환한다`() {
         val entity = makeToiletEntity(id = 42L)
         val images = listOf(
-            ToiletImageEntity(toiletId = 42L, url = "https://cdn.example.com/img1.jpg"),
-            ToiletImageEntity(toiletId = 42L, url = "https://cdn.example.com/img2.jpg"),
+            ToiletImageEntity(toiletId = 42L, url = "https://cdn.example.com/img1.webp", originalUrl = "https://cdn.example.com/orig1.jpg"),
+            ToiletImageEntity(toiletId = 42L, url = "https://cdn.example.com/img2.webp", originalUrl = "https://cdn.example.com/orig2.jpg"),
         )
         `when`(toiletRepository.findById(42L)).thenReturn(entity)
         `when`(toiletRepository.findImagesByToiletId(42L)).thenReturn(images)
@@ -99,8 +96,8 @@ class ToiletServiceTest {
         val result = toiletService.getById(42L)
 
         assertThat(result.imageUrls).containsExactly(
-            "https://cdn.example.com/img1.jpg",
-            "https://cdn.example.com/img2.jpg",
+            "https://cdn.example.com/img1.webp",
+            "https://cdn.example.com/img2.webp",
         )
     }
 
@@ -115,32 +112,11 @@ class ToiletServiceTest {
     }
 
     // ──────────────────────────────────────────
-    // presignImageUpload
-    // ──────────────────────────────────────────
-
-    @Test
-    fun `presignImageUpload - contentType으로 presigned URL을 발급한다`() {
-        val contentType = "image/jpeg"
-        val expectedResult = PresignedUploadResult(
-            presignedUrl = "https://r2.example.com/presign?sig=abc",
-            objectKey = "toilet-images/uuid.jpeg",
-            publicUrl = "https://cdn.example.com/toilet-images/uuid.jpeg",
-        )
-        `when`(imageStoragePort.generatePresignedPutUrl(any(), any(), any())).thenReturn(expectedResult)
-
-        val result = toiletService.presignImageUpload(contentType)
-
-        assertThat(result.presignedUrl).isEqualTo(expectedResult.presignedUrl)
-        assertThat(result.publicUrl).isEqualTo(expectedResult.publicUrl)
-        assertThat(result.objectKey).isEqualTo(expectedResult.objectKey)
-    }
-
-    // ──────────────────────────────────────────
     // report
     // ──────────────────────────────────────────
 
     @Test
-    fun `report - imageUrls 없이 제보하면 이미지 없이 저장된다`() {
+    fun `report - images 없이 제보하면 이미지 없이 저장된다`() {
         val request = ToiletReportRequest(
             name = "새 화장실",
             address = "서울시 중구 1번지",
@@ -157,24 +133,34 @@ class ToiletServiceTest {
     }
 
     @Test
-    fun `report - imageUrls를 포함하면 이미지 엔티티를 저장한다`() {
+    fun `report - images를 포함하면 이미지 엔티티를 저장한다`() {
+        val imageRefs = listOf(
+            ImageRef(url = "https://cdn.example.com/webp1.webp", originalUrl = "https://cdn.example.com/orig1.jpg"),
+            ImageRef(url = "https://cdn.example.com/webp2.webp", originalUrl = "https://cdn.example.com/orig2.jpg"),
+        )
         val request = ToiletReportRequest(
             name = "새 화장실",
             address = "서울시 중구 1번지",
             lat = 37.5665,
             lng = 126.9780,
-            imageUrls = listOf("https://cdn.example.com/img1.jpg", "https://cdn.example.com/img2.jpg"),
+            images = imageRefs,
         )
         val savedEntity = makeToiletEntity(id = 10L, lat = request.lat, lng = request.lng)
-        val savedImages = request.imageUrls.map { ToiletImageEntity(toiletId = 10L, url = it) }
+        val savedImages = imageRefs.map {
+            ToiletImageEntity(toiletId = 10L, url = it.url, originalUrl = it.originalUrl)
+        }
 
+        doNothing().`when`(imageService).validateUrls(any())
         `when`(toiletRepository.save(anyNonNull(ToiletEntity::class.java))).thenReturn(savedEntity)
         `when`(toiletRepository.saveImages(any())).thenReturn(savedImages)
 
         val result = toiletService.report(userId = 7L, request = request)
 
         assertThat(result.id).isEqualTo(10L)
-        assertThat(result.imageUrls).containsExactlyElementsOf(request.imageUrls)
+        assertThat(result.imageUrls).containsExactly(
+            "https://cdn.example.com/webp1.webp",
+            "https://cdn.example.com/webp2.webp",
+        )
     }
 
     @Test

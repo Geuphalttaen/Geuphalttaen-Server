@@ -2,9 +2,10 @@ package com.geuphalttaen.domain.toilet
 
 import com.geuphalttaen.core.entity.ToiletEntity
 import com.geuphalttaen.core.entity.ToiletStatus
+import jakarta.validation.Valid
 import jakarta.validation.constraints.DecimalMax
 import jakarta.validation.constraints.DecimalMin
-import jakarta.validation.constraints.Pattern
+import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
 import java.time.LocalDateTime
 
@@ -29,6 +30,11 @@ data class ToiletResponse(
     val imageUrls: List<String> = emptyList(),
 )
 
+data class ImageRef(
+    @field:NotBlank val url: String,
+    @field:NotBlank val originalUrl: String,
+)
+
 data class ToiletReportRequest(
     val name: String,
     val address: String,
@@ -39,8 +45,14 @@ data class ToiletReportRequest(
     val female: Boolean = true,
     val disabled: Boolean = false,
     val familyRoom: Boolean = false,
+    @field:Valid
     @field:Size(max = 5, message = "이미지는 최대 5장까지 첨부할 수 있습니다.")
-    val imageUrls: List<String> = emptyList(),
+    val images: List<ImageRef> = emptyList(),
+)
+
+data class ImageUploadResponse(
+    val url: String,
+    val originalUrl: String,
 )
 
 /**
@@ -78,20 +90,6 @@ data class AdminToiletUpdateRequest(
     val female: Boolean? = null,
     val disabled: Boolean? = null,
     val familyRoom: Boolean? = null,
-)
-
-data class ImagePresignRequest(
-    @field:Pattern(
-        regexp = "image/(jpeg|png|webp)",
-        message = "contentType은 image/jpeg, image/png, image/webp 중 하나여야 합니다.",
-    )
-    val contentType: String,
-)
-
-data class ImagePresignResponse(
-    val presignedUrl: String,
-    val objectKey: String,
-    val publicUrl: String,
 )
 
 /**

@@ -14,6 +14,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
 
     kapt("org.springframework.boot:spring-boot-configuration-processor")
 
@@ -38,7 +39,10 @@ dependencies {
     // Cloudflare R2 (AWS SDK S3 호환)
     implementation(platform("software.amazon.awssdk:bom:2.25.60"))
     implementation("software.amazon.awssdk:s3")
-    implementation("software.amazon.awssdk:s3-transfer-manager")
+
+    // WebP 변환 (cwebp 네이티브 바이너리 필요)
+    implementation("com.sksamuel.scrimage:scrimage-core:4.3.0")
+    implementation("com.sksamuel.scrimage:scrimage-webp:4.3.0")
 
     runtimeOnly("com.mysql:mysql-connector-j")
 
