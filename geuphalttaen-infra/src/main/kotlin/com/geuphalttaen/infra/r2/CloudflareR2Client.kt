@@ -2,6 +2,7 @@ package com.geuphalttaen.infra.r2
 
 import com.geuphalttaen.domain.image.ImageStoragePort
 import jakarta.annotation.PostConstruct
+import jakarta.annotation.PreDestroy
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.stereotype.Component
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
@@ -27,7 +28,7 @@ class CloudflareR2Client(
         require(properties.publicUrl.isNotBlank()) { "cloudflare.r2.public-url must not be blank" }
     }
 
-    private val s3Client: S3Client by lazy {
+    private val s3ClientLazy = lazy {
         S3Client.builder()
             .endpointOverride(URI.create("https://${properties.accountId}.r2.cloudflarestorage.com"))
             .credentialsProvider(
@@ -38,6 +39,7 @@ class CloudflareR2Client(
             .region(Region.of("auto"))
             .build()
     }
+    private val s3Client: S3Client by s3ClientLazy
 
     override fun upload(objectKey: String, contentType: String, data: ByteArray): String {
         s3Client.putObject(
@@ -51,6 +53,13 @@ class CloudflareR2Client(
         return "${properties.publicUrl.trimEnd('/')}/$objectKey"
     }
 
-    override fun isOwnUrl(url: String): Boolean =
-        url.startsWith(properties.publicUrl.trimEnd('/'))
+    override fun isOwnUrl(url: String): Boolean {
+        val base = properties.publicUrl.trimEnd('/') + "/"
+        return url.startsWith(base)
+    }
+
+    @PreDestroy
+    fun close() {
+        if (s3ClientLazy.isInitialized()) s3Client.close()
+    }
 }
