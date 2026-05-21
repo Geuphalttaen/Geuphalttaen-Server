@@ -1,6 +1,7 @@
 package com.geuphalttaen.domain.toilet
 
 import com.geuphalttaen.core.entity.ToiletEntity
+import com.geuphalttaen.core.entity.ToiletImageEntity
 import com.geuphalttaen.core.entity.ToiletStatus
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -39,4 +40,8 @@ interface ToiletRepository {
     fun findAllActivePublic(): List<ToiletEntity>
 
     fun deleteAll(entities: List<ToiletEntity>)
+
+    fun saveImages(images: List<ToiletImageEntity>): List<ToiletImageEntity>
+    fun findImagesByToiletId(toiletId: Long): List<ToiletImageEntity>
+    fun findImagesByToiletIds(toiletIds: List<Long>): List<ToiletImageEntity>
 }

@@ -3,25 +3,39 @@ package com.geuphalttaen.domain.toilet
 import com.geuphalttaen.common.exception.BusinessException
 import com.geuphalttaen.common.exception.ErrorCode
 import com.geuphalttaen.core.entity.ToiletEntity
+import com.geuphalttaen.core.entity.ToiletImageEntity
 import com.geuphalttaen.core.entity.ToiletStatus
+import com.geuphalttaen.domain.image.ImageService
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import kotlin.math.*
 
 @Service
 class ToiletService(
     private val toiletRepository: ToiletRepository,
+    private val imageService: ImageService,
 ) {
     fun searchNearby(request: ToiletSearchRequest): List<ToiletResponse> {
         val entities = toiletRepository.findNearby(request.lat, request.lng, request.radiusMeters)
-        return entities.map { it.toResponse(request.lat, request.lng) }
+        val toiletIds = entities.map { it.id }
+        val imageMap = toiletRepository.findImagesByToiletIds(toiletIds)
+            .groupBy({ it.toiletId }, { it.url })
+        return entities.map { it.toResponse(request.lat, request.lng, imageMap[it.id] ?: emptyList()) }
     }
 
     fun getById(id: Long): ToiletResponse {
         val entity = toiletRepository.findById(id) ?: throw BusinessException(ErrorCode.TOILET_NOT_FOUND)
-        return entity.toResponse()
+        val images = toiletRepository.findImagesByToiletId(id).map { it.url }
+        return entity.toResponse(imageUrls = images)
     }
 
+    @Transactional
     fun report(userId: Long, request: ToiletReportRequest): ToiletResponse {
+        if (request.images.isNotEmpty()) {
+            imageService.validateUrls(request.images.map { it.url })
+            imageService.validateUrls(request.images.map { it.originalUrl })
+        }
+
         val entity = ToiletEntity(
             name = request.name,
             address = request.address,
@@ -36,10 +50,22 @@ class ToiletService(
             status = ToiletStatus.PENDING,
         )
         val saved = toiletRepository.save(entity)
-        return saved.toResponse(request.lat, request.lng)
+
+        val imageUrls = if (request.images.isNotEmpty()) {
+            val imageEntities = request.images.map {
+                ToiletImageEntity(toiletId = saved.id, url = it.url, originalUrl = it.originalUrl)
+            }
+            toiletRepository.saveImages(imageEntities).map { it.url }
+        } else emptyList()
+
+        return saved.toResponse(request.lat, request.lng, imageUrls)
     }
 
-    private fun ToiletEntity.toResponse(fromLat: Double? = null, fromLng: Double? = null): ToiletResponse =
+    private fun ToiletEntity.toResponse(
+        fromLat: Double? = null,
+        fromLng: Double? = null,
+        imageUrls: List<String> = emptyList(),
+    ): ToiletResponse =
         ToiletResponse(
             id = id,
             name = name,
@@ -52,6 +78,7 @@ class ToiletService(
             disabled = disabled,
             familyRoom = familyRoom,
             isPublic = isPublic,
+            imageUrls = imageUrls,
         )
 
     private fun haversineMeters(lat1: Double, lng1: Double, lat2: Double, lng2: Double): Double {

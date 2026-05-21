@@ -1,0 +1,7 @@
+cloudflare:
+  r2:
+    account-id: ${CF_R2_ACCOUNT_ID:}
+    access-key-id: ${CF_R2_ACCESS_KEY_ID:}
+    secret-access-key: ${CF_R2_SECRET_ACCESS_KEY:}
+    bucket-name: ${CF_R2_BUCKET_NAME:}
+    public-url: ${CF_R2_PUBLIC_URL:}

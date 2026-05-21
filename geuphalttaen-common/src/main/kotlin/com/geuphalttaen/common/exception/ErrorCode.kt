@@ -35,4 +35,10 @@ enum class ErrorCode(
     TOILET_STATUS_INVALID("AD003", HttpStatus.BAD_REQUEST, "해당 상태로 변경할 수 없습니다."),
     ADMIN_ALREADY_EXISTS("AD004", HttpStatus.CONFLICT, "이미 관리자 계정이 존재합니다."),
     ADMIN_SEED_FORBIDDEN("AD005", HttpStatus.FORBIDDEN, "시드 시크릿이 올바르지 않습니다."),
+
+    // 이미지 에러
+    IMAGE_UPLOAD_FAILED("IMG001", HttpStatus.INTERNAL_SERVER_ERROR, "이미지 업로드에 실패했습니다."),
+    IMAGE_INVALID_TYPE("IMG002", HttpStatus.BAD_REQUEST, "허용되지 않는 이미지 형식입니다. (jpeg, png, webp만 허용)"),
+    IMAGE_TOO_LARGE("IMG003", HttpStatus.BAD_REQUEST, "이미지 크기는 10MB를 초과할 수 없습니다."),
+    IMAGE_INVALID_URL("IMG004", HttpStatus.BAD_REQUEST, "허용되지 않는 이미지 URL입니다."),
 }

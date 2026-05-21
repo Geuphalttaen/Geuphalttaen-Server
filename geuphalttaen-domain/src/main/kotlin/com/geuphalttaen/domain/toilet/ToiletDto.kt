@@ -2,8 +2,10 @@ package com.geuphalttaen.domain.toilet
 
 import com.geuphalttaen.core.entity.ToiletEntity
 import com.geuphalttaen.core.entity.ToiletStatus
+import jakarta.validation.Valid
 import jakarta.validation.constraints.DecimalMax
 import jakarta.validation.constraints.DecimalMin
+import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
 import java.time.LocalDateTime
 
@@ -25,6 +27,12 @@ data class ToiletResponse(
     val disabled: Boolean,
     val familyRoom: Boolean,
     val isPublic: Boolean,
+    val imageUrls: List<String> = emptyList(),
+)
+
+data class ImageRef(
+    @field:NotBlank val url: String,
+    @field:NotBlank val originalUrl: String,
 )
 
 data class ToiletReportRequest(
@@ -37,6 +45,14 @@ data class ToiletReportRequest(
     val female: Boolean = true,
     val disabled: Boolean = false,
     val familyRoom: Boolean = false,
+    @field:Valid
+    @field:Size(max = 5, message = "이미지는 최대 5장까지 첨부할 수 있습니다.")
+    val images: List<ImageRef> = emptyList(),
+)
+
+data class ImageUploadResponse(
+    val url: String,
+    val originalUrl: String,
 )
 
 /**
@@ -57,6 +73,7 @@ data class AdminToiletResponse(
     val status: ToiletStatus,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
+    val imageUrls: List<String> = emptyList(),
 )
 
 /**
@@ -78,7 +95,7 @@ data class AdminToiletUpdateRequest(
 /**
  * ToiletEntity → AdminToiletResponse 변환 확장 함수.
  */
-fun ToiletEntity.toAdminResponse(): AdminToiletResponse = AdminToiletResponse(
+fun ToiletEntity.toAdminResponse(imageUrls: List<String> = emptyList()): AdminToiletResponse = AdminToiletResponse(
     id = id,
     name = name,
     address = address,
@@ -93,4 +110,5 @@ fun ToiletEntity.toAdminResponse(): AdminToiletResponse = AdminToiletResponse(
     status = status,
     createdAt = createdAt,
     updatedAt = updatedAt,
+    imageUrls = imageUrls,
 )
