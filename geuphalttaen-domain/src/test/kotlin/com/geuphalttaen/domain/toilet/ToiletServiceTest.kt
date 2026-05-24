@@ -6,6 +6,9 @@ import com.geuphalttaen.core.entity.ToiletEntity
 import com.geuphalttaen.core.entity.ToiletImageEntity
 import com.geuphalttaen.core.entity.ToiletStatus
 import com.geuphalttaen.domain.image.ImageService
+import com.geuphalttaen.domain.review.CleanlinessRepository
+import com.geuphalttaen.domain.review.ReviewRepository
+import com.geuphalttaen.domain.review.ReviewStats
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
@@ -28,11 +31,17 @@ class ToiletServiceTest {
     @Mock
     private lateinit var imageService: ImageService
 
+    @Mock
+    private lateinit var reviewRepository: ReviewRepository
+
+    @Mock
+    private lateinit var cleanlinessRepository: CleanlinessRepository
+
     private lateinit var toiletService: ToiletService
 
     @BeforeEach
     fun setUp() {
-        toiletService = ToiletService(toiletRepository, imageService)
+        toiletService = ToiletService(toiletRepository, imageService, reviewRepository, cleanlinessRepository)
     }
 
     // ──────────────────────────────────────────
@@ -46,6 +55,8 @@ class ToiletServiceTest {
         val entity = makeToiletEntity(id = 1L, lat = lat, lng = lng)
         `when`(toiletRepository.findNearby(lat, lng, 1000)).thenReturn(listOf(entity))
         `when`(toiletRepository.findImagesByToiletIds(listOf(1L))).thenReturn(emptyList())
+        `when`(reviewRepository.findStatsByToiletIds(listOf(1L))).thenReturn(emptyMap())
+        `when`(cleanlinessRepository.findAveragesByToiletIds(listOf(1L))).thenReturn(emptyMap())
 
         val result = toiletService.searchNearby(ToiletSearchRequest(lat = lat, lng = lng))
 
@@ -75,6 +86,8 @@ class ToiletServiceTest {
         val entity = makeToiletEntity(id = 42L, familyRoom = true)
         `when`(toiletRepository.findById(42L)).thenReturn(entity)
         `when`(toiletRepository.findImagesByToiletId(42L)).thenReturn(emptyList())
+        `when`(reviewRepository.findStatsByToiletId(42L)).thenReturn(ReviewStats(null, 0L))
+        `when`(cleanlinessRepository.findAverageByToiletId(42L)).thenReturn(null)
 
         val result = toiletService.getById(42L)
 
@@ -92,6 +105,8 @@ class ToiletServiceTest {
         )
         `when`(toiletRepository.findById(42L)).thenReturn(entity)
         `when`(toiletRepository.findImagesByToiletId(42L)).thenReturn(images)
+        `when`(reviewRepository.findStatsByToiletId(42L)).thenReturn(ReviewStats(null, 0L))
+        `when`(cleanlinessRepository.findAverageByToiletId(42L)).thenReturn(null)
 
         val result = toiletService.getById(42L)
 

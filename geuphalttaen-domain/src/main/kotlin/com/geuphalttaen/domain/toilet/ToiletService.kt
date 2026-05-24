@@ -6,6 +6,8 @@ import com.geuphalttaen.core.entity.ToiletEntity
 import com.geuphalttaen.core.entity.ToiletImageEntity
 import com.geuphalttaen.core.entity.ToiletStatus
 import com.geuphalttaen.domain.image.ImageService
+import com.geuphalttaen.domain.review.CleanlinessRepository
+import com.geuphalttaen.domain.review.ReviewRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.math.*
@@ -14,19 +16,40 @@ import kotlin.math.*
 class ToiletService(
     private val toiletRepository: ToiletRepository,
     private val imageService: ImageService,
+    private val reviewRepository: ReviewRepository,
+    private val cleanlinessRepository: CleanlinessRepository,
 ) {
     fun searchNearby(request: ToiletSearchRequest): List<ToiletResponse> {
         val entities = toiletRepository.findNearby(request.lat, request.lng, request.radiusMeters)
         val toiletIds = entities.map { it.id }
         val imageMap = toiletRepository.findImagesByToiletIds(toiletIds)
             .groupBy({ it.toiletId }, { it.url })
-        return entities.map { it.toResponse(request.lat, request.lng, imageMap[it.id] ?: emptyList()) }
+        val reviewStatsMap = if (toiletIds.isNotEmpty()) reviewRepository.findStatsByToiletIds(toiletIds) else emptyMap()
+        val cleanlinessMap = if (toiletIds.isNotEmpty()) cleanlinessRepository.findAveragesByToiletIds(toiletIds) else emptyMap()
+        return entities.map {
+            val stats = reviewStatsMap[it.id]
+            it.toResponse(
+                fromLat = request.lat,
+                fromLng = request.lng,
+                imageUrls = imageMap[it.id] ?: emptyList(),
+                averageRating = stats?.averageRating,
+                reviewCount = stats?.reviewCount ?: 0L,
+                averageCleanliness = cleanlinessMap[it.id],
+            )
+        }
     }
 
     fun getById(id: Long): ToiletResponse {
         val entity = toiletRepository.findById(id) ?: throw BusinessException(ErrorCode.TOILET_NOT_FOUND)
         val images = toiletRepository.findImagesByToiletId(id).map { it.url }
-        return entity.toResponse(imageUrls = images)
+        val stats = reviewRepository.findStatsByToiletId(id)
+        val avgCleanliness = cleanlinessRepository.findAverageByToiletId(id)
+        return entity.toResponse(
+            imageUrls = images,
+            averageRating = stats.averageRating,
+            reviewCount = stats.reviewCount,
+            averageCleanliness = avgCleanliness,
+        )
     }
 
     @Transactional
@@ -58,6 +81,7 @@ class ToiletService(
             toiletRepository.saveImages(imageEntities).map { it.url }
         } else emptyList()
 
+        // 신규 제보 화장실은 리뷰/청결도 데이터 없음
         return saved.toResponse(request.lat, request.lng, imageUrls)
     }
 
@@ -65,6 +89,9 @@ class ToiletService(
         fromLat: Double? = null,
         fromLng: Double? = null,
         imageUrls: List<String> = emptyList(),
+        averageRating: Double? = null,
+        reviewCount: Long = 0L,
+        averageCleanliness: Double? = null,
     ): ToiletResponse =
         ToiletResponse(
             id = id,
@@ -79,6 +106,9 @@ class ToiletService(
             familyRoom = familyRoom,
             isPublic = isPublic,
             imageUrls = imageUrls,
+            averageRating = averageRating,
+            reviewCount = reviewCount,
+            averageCleanliness = averageCleanliness,
         )
 
     private fun haversineMeters(lat1: Double, lng1: Double, lat2: Double, lng2: Double): Double {
