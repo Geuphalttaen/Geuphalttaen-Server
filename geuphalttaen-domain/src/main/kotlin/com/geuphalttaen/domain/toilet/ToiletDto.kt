@@ -28,6 +28,9 @@ data class ToiletResponse(
     val familyRoom: Boolean,
     val isPublic: Boolean,
     val imageUrls: List<String> = emptyList(),
+    val averageRating: Double? = null,
+    val reviewCount: Long = 0L,
+    val averageCleanliness: Double? = null,
 )
 
 data class ImageRef(
