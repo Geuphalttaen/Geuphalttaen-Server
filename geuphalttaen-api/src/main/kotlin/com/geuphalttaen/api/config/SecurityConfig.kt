@@ -56,7 +56,6 @@ class SecurityConfig(
             .authorizeHttpRequests { auth ->
                 auth
                     .requestMatchers(HttpMethod.GET, "/api/v1/toilets").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/v1/toilets/*/reviews").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/toilets/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/directions").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/geocode/**").permitAll()

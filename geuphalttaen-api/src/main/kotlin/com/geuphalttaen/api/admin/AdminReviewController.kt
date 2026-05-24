@@ -17,12 +17,13 @@ import org.springframework.web.bind.annotation.*
 @Tag(name = "Admin Reviews", description = "관리자 리뷰 관리 API")
 @SecurityRequirement(name = "bearerAuth")
 @RestController
+@RequestMapping("/api/v1/admin")
 @Validated
 class AdminReviewController(
     private val reviewService: ReviewService,
 ) {
     @Operation(summary = "화장실 리뷰 목록 조회 (관리자)")
-    @GetMapping("/api/v1/admin/toilets/{id}/reviews")
+    @GetMapping("/toilets/{id}/reviews")
     fun getReviews(
         @PathVariable id: Long,
         @RequestParam(defaultValue = "0") @Min(0) page: Int,
@@ -33,7 +34,7 @@ class AdminReviewController(
     }
 
     @Operation(summary = "리뷰 삭제 (관리자)")
-    @DeleteMapping("/api/v1/admin/reviews/{id}")
+    @DeleteMapping("/reviews/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun deleteReview(@PathVariable id: Long) {
         reviewService.deleteReview(id)

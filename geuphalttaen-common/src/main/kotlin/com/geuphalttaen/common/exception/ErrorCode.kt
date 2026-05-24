@@ -45,5 +45,4 @@ enum class ErrorCode(
     // 리뷰 에러
     REVIEW_NOT_FOUND("RV001", HttpStatus.NOT_FOUND, "리뷰를 찾을 수 없습니다."),
     REVIEW_DUPLICATE("RV002", HttpStatus.BAD_REQUEST, "이미 리뷰를 작성하셨습니다."),
-    REVIEW_RATING_INVALID("RV003", HttpStatus.BAD_REQUEST, "별점은 1~5 사이의 값이어야 합니다."),
 }
