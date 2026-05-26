@@ -45,10 +45,11 @@ class GlobalExceptionHandler {
 
     @ExceptionHandler(MaxUploadSizeExceededException::class)
     fun handleMaxUploadSizeExceeded(e: MaxUploadSizeExceededException): ResponseEntity<ApiResponse<Nothing>> {
-        log.warn("MaxUploadSizeExceededException: {}", e.message)
+        log.warn("MaxUploadSizeExceededException: maxUploadSize={}, message={}", e.maxUploadSize, e.message)
+        val errorCode = ErrorCode.FILE_TOO_LARGE
         return ResponseEntity
-            .status(HttpStatus.PAYLOAD_TOO_LARGE)
-            .body(ApiResponse.error("C413", "파일 크기가 허용 한도를 초과했습니다."))
+            .status(errorCode.status)
+            .body(ApiResponse.error(errorCode.code, errorCode.message))
     }
 
     @ExceptionHandler(Exception::class)

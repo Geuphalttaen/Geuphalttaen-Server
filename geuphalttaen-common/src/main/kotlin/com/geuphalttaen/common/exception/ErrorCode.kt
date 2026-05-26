@@ -41,6 +41,7 @@ enum class ErrorCode(
     IMAGE_INVALID_TYPE("IMG002", HttpStatus.BAD_REQUEST, "허용되지 않는 이미지 형식입니다. (jpeg, png, webp만 허용)"),
     IMAGE_TOO_LARGE("IMG003", HttpStatus.BAD_REQUEST, "이미지 크기는 10MB를 초과할 수 없습니다."),
     IMAGE_INVALID_URL("IMG004", HttpStatus.BAD_REQUEST, "허용되지 않는 이미지 URL입니다."),
+    FILE_TOO_LARGE("C413", HttpStatus.PAYLOAD_TOO_LARGE, "파일 크기가 허용 한도(20MB)를 초과했습니다."),
 
     // 리뷰 에러
     REVIEW_NOT_FOUND("RV001", HttpStatus.NOT_FOUND, "리뷰를 찾을 수 없습니다."),
