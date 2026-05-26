@@ -36,7 +36,7 @@ class PublicToiletCsvClient : ToiletDataPort {
             fun col(name: String) = idx[name]?.let { row.getOrNull(it)?.trim() }
             val lat = (col("WGS84위도") ?: col("위도"))?.toDoubleOrNull()
             val lng = (col("WGS84경도") ?: col("경도"))?.toDoubleOrNull()
-            if (lat == null || lng == null) { noCoords++; continue }
+            if (lat == null || lng == null || lat !in -90.0..90.0 || lng !in -180.0..180.0) { noCoords++; continue }
             val hasAddress = listOf("소재지도로명주소", "도로명주소", "소재지지번주소", "지번주소")
                 .any { col(it)?.isNotBlank() == true }
             if (!hasAddress) { noAddress++; continue }
@@ -52,8 +52,8 @@ class PublicToiletCsvClient : ToiletDataPort {
     private fun parseRow(row: Array<String>, idx: Map<String, Int>): ExternalToiletData? {
         fun col(name: String) = idx[name]?.let { row.getOrNull(it)?.trim() }
 
-        val lat = (col("WGS84위도") ?: col("위도"))?.toDoubleOrNull() ?: return null
-        val lng = (col("WGS84경도") ?: col("경도"))?.toDoubleOrNull() ?: return null
+        val lat = (col("WGS84위도") ?: col("위도"))?.toDoubleOrNull()?.takeIf { it in -90.0..90.0 } ?: return null
+        val lng = (col("WGS84경도") ?: col("경도"))?.toDoubleOrNull()?.takeIf { it in -180.0..180.0 } ?: return null
 
         val address = col("소재지도로명주소")?.takeIf { it.isNotBlank() }
             ?: col("도로명주소")?.takeIf { it.isNotBlank() }
