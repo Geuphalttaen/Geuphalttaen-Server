@@ -34,12 +34,13 @@ class ImageService(
 
         val uuid = UUID.randomUUID()
         val ext = contentType.substringAfter("/").let { if (it == "jpeg") "jpg" else it }
+        val folder = imageStoragePort.baseFolder()
 
-        val originalKey = "toilet-images/original/$uuid.$ext"
+        val originalKey = "$folder/original/$uuid.$ext"
         val originalUrl = imageStoragePort.upload(originalKey, contentType, data)
 
         val webpBytes = imageConversionPort.toWebP(data)
-        val webpKey = "toilet-images/webp/$uuid.webp"
+        val webpKey = "$folder/webp/$uuid.webp"
         val webpUrl = imageStoragePort.upload(webpKey, "image/webp", webpBytes)
 
         return ImageUploadResult(url = webpUrl, originalUrl = originalUrl)

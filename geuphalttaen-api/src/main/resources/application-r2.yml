@@ -5,3 +5,4 @@ cloudflare:
     secret-access-key: ${CF_R2_SECRET_ACCESS_KEY:}
     bucket-name: ${CF_R2_BUCKET_NAME:}
     public-url: ${CF_R2_PUBLIC_URL:}
+    folder: ${CF_R2_FOLDER:toilet-images}

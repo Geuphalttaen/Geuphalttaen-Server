@@ -58,6 +58,8 @@ class CloudflareR2Client(
         return url.startsWith(base)
     }
 
+    override fun baseFolder(): String = properties.folder.trimEnd('/')
+
     @PreDestroy
     fun close() {
         if (s3ClientLazy.isInitialized()) s3Client.close()

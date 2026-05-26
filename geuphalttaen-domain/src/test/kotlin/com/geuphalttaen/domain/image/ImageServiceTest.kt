@@ -35,6 +35,7 @@ class ImageServiceTest {
     @Test
     fun `upload - JPEG 매직 바이트가 올바르면 성공한다`() {
         val jpegBytes = jpegMagic() + ByteArray(100)
+        `when`(imageStoragePort.baseFolder()).thenReturn("toilet-images")
         `when`(imageStoragePort.upload(any(), any(), any())).thenReturn("https://cdn.example.com/img.webp")
         `when`(imageConversionPort.toWebP(any(), any(), any())).thenReturn(ByteArray(50))
 
@@ -47,6 +48,7 @@ class ImageServiceTest {
     @Test
     fun `upload - PNG 매직 바이트가 올바르면 성공한다`() {
         val pngBytes = pngMagic() + ByteArray(100)
+        `when`(imageStoragePort.baseFolder()).thenReturn("toilet-images")
         `when`(imageStoragePort.upload(any(), any(), any())).thenReturn("https://cdn.example.com/img.webp")
         `when`(imageConversionPort.toWebP(any(), any(), any())).thenReturn(ByteArray(50))
 
