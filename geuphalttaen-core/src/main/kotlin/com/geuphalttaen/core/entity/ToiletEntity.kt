@@ -9,7 +9,12 @@ enum class ToiletStatus {
 }
 
 @Entity
-@Table(name = "toilets")
+@Table(
+    name = "toilets",
+    indexes = [
+        Index(name = "idx_toilets_reported_by_status", columnList = "reported_by, status"),
+    ],
+)
 class ToiletEntity(
 
     @Id
@@ -39,6 +44,9 @@ class ToiletEntity(
 
     @Column(nullable = false)
     var disabled: Boolean = false,
+
+    @Column(name = "family_room", nullable = false)
+    var familyRoom: Boolean = false,
 
     @Column(name = "reported_by")
     var reportedBy: Long? = null,

@@ -1,0 +1,3 @@
+opendata:
+  toilet:
+    csv-url: https://file.localdata.go.kr/file/download/public_restroom_info/info

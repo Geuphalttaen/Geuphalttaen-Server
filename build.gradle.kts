@@ -38,10 +38,15 @@ subprojects {
         testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     }
 
+    configure<JavaPluginExtension> {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(21))
+        }
+    }
+
     tasks.withType<KotlinCompile> {
         compilerOptions {
             freeCompilerArgs.addAll("-Xjsr305=strict")
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
         }
     }
 

@@ -1,0 +1,49 @@
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.actuate.autoconfigure.data.redis.RedisReactiveHealthContributorAutoConfiguration
+      - org.springframework.boot.actuate.autoconfigure.data.redis.RedisHealthContributorAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: false
+    open-in-view: false
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+jwt:
+  secret: test-secret-key-must-be-at-least-32-characters-long-for-hmac
+
+opendata:
+  toilet:
+    api-key: ""
+    base-url: "https://api.odcloud.kr/api"
+
+kakao:
+  oauth:
+    client-id: test-client-id
+    client-secret: test-client-secret
+  maps:
+    rest-key: test-kakao-maps-key
+
+ncp:
+  maps:
+    client-id: test-ncp-client-id
+    client-secret: test-ncp-client-secret
+
+cloudflare:
+  r2:
+    account-id: ""
+    access-key-id: ""
+    secret-access-key: ""
+    bucket-name: ""
+    public-url: ""
+
+admin:
+  seed-secret: test-seed-secret
