@@ -9,4 +9,6 @@ data class CloudflareR2Properties(
     val secretAccessKey: String = "",
     val bucketName: String = "",
     val publicUrl: String = "",
+    val folder: String = "toilet-images",
+    val profile: String = "local",
 )

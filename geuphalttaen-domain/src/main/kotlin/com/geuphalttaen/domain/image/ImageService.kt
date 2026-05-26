@@ -23,7 +23,7 @@ class ImageService(
     private val imageStoragePort: ImageStoragePort,
     private val imageConversionPort: ImageConversionPort,
 ) {
-    fun upload(data: ByteArray, contentType: String): ImageUploadResult {
+    fun upload(data: ByteArray, contentType: String, userId: Long): ImageUploadResult {
         if (contentType !in ALLOWED_CONTENT_TYPES) {
             throw BusinessException(ErrorCode.IMAGE_INVALID_TYPE)
         }
@@ -34,12 +34,13 @@ class ImageService(
 
         val uuid = UUID.randomUUID()
         val ext = contentType.substringAfter("/").let { if (it == "jpeg") "jpg" else it }
+        val base = "${imageStoragePort.baseFolder()}/$userId"
 
-        val originalKey = "toilet-images/original/$uuid.$ext"
+        val originalKey = "$base/original/$uuid.$ext"
         val originalUrl = imageStoragePort.upload(originalKey, contentType, data)
 
         val webpBytes = imageConversionPort.toWebP(data)
-        val webpKey = "toilet-images/webp/$uuid.webp"
+        val webpKey = "$base/webp/$uuid.webp"
         val webpUrl = imageStoragePort.upload(webpKey, "image/webp", webpBytes)
 
         return ImageUploadResult(url = webpUrl, originalUrl = originalUrl)

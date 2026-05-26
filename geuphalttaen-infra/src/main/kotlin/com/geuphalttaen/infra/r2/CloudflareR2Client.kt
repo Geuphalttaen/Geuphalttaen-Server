@@ -26,6 +26,7 @@ class CloudflareR2Client(
         require(properties.secretAccessKey.isNotBlank()) { "cloudflare.r2.secret-access-key must not be blank" }
         require(properties.bucketName.isNotBlank()) { "cloudflare.r2.bucket-name must not be blank" }
         require(properties.publicUrl.isNotBlank()) { "cloudflare.r2.public-url must not be blank" }
+        require(properties.folder.isNotBlank()) { "cloudflare.r2.folder must not be blank" }
     }
 
     private val s3ClientLazy = lazy {
@@ -57,6 +58,9 @@ class CloudflareR2Client(
         val base = properties.publicUrl.trimEnd('/') + "/"
         return url.startsWith(base)
     }
+
+    override fun baseFolder(): String =
+        "${properties.profile.trimEnd('/')}/${properties.folder.trimEnd('/')}"
 
     @PreDestroy
     fun close() {
