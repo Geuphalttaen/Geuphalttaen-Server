@@ -46,4 +46,30 @@ class ToiletSearchRequestValidationTest {
         val req = ToiletSearchRequest(lat = 37.5665, lng = 181.0)
         assertThat(validator.validate(req).map { it.propertyPath.toString() }).contains("lng")
     }
+
+    @Test
+    fun `lng가 -180 미만이면 검증 실패`() {
+        val req = ToiletSearchRequest(lat = 37.5665, lng = -181.0)
+        assertThat(validator.validate(req).map { it.propertyPath.toString() }).contains("lng")
+    }
+
+    @Test
+    fun `lat 경계값 90_0은 통과한다`() {
+        assertThat(validator.validate(ToiletSearchRequest(lat = 90.0, lng = 0.0))).isEmpty()
+    }
+
+    @Test
+    fun `lat 경계값 -90_0은 통과한다`() {
+        assertThat(validator.validate(ToiletSearchRequest(lat = -90.0, lng = 0.0))).isEmpty()
+    }
+
+    @Test
+    fun `lng 경계값 180_0은 통과한다`() {
+        assertThat(validator.validate(ToiletSearchRequest(lat = 0.0, lng = 180.0))).isEmpty()
+    }
+
+    @Test
+    fun `lng 경계값 -180_0은 통과한다`() {
+        assertThat(validator.validate(ToiletSearchRequest(lat = 0.0, lng = -180.0))).isEmpty()
+    }
 }
