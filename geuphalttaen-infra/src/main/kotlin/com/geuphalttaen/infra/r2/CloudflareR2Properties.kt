@@ -10,4 +10,5 @@ data class CloudflareR2Properties(
     val bucketName: String = "",
     val publicUrl: String = "",
     val folder: String = "toilet-images",
+    val profile: String = "local",
 )

@@ -7,10 +7,14 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.ArgumentCaptor
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.any
+import org.mockito.kotlin.argumentCaptor
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.atLeastOnce
 
 @ExtendWith(MockitoExtension::class)
 class ImageServiceTest {
@@ -35,31 +39,42 @@ class ImageServiceTest {
     @Test
     fun `upload - JPEG 매직 바이트가 올바르면 성공한다`() {
         val jpegBytes = jpegMagic() + ByteArray(100)
-        `when`(imageStoragePort.baseFolder()).thenReturn("toilet-images")
+        `when`(imageStoragePort.baseFolder()).thenReturn("local/toilet-images")
         `when`(imageStoragePort.upload(any(), any(), any())).thenReturn("https://cdn.example.com/img.webp")
         `when`(imageConversionPort.toWebP(any(), any(), any())).thenReturn(ByteArray(50))
 
-        val result = imageService.upload(jpegBytes, "image/jpeg")
+        val result = imageService.upload(jpegBytes, "image/jpeg", userId = 42L)
 
         assertThat(result.url).isEqualTo("https://cdn.example.com/img.webp")
         assertThat(result.originalUrl).isEqualTo("https://cdn.example.com/img.webp")
+
+        val keyCaptor = argumentCaptor<String>()
+        verify(imageStoragePort, atLeastOnce()).upload(keyCaptor.capture(), any(), any())
+        assertThat(keyCaptor.allValues).anySatisfy { key ->
+            assertThat(key).startsWith("local/toilet-images/42/original/")
+            assertThat(key).endsWith(".jpg")
+        }
+        assertThat(keyCaptor.allValues).anySatisfy { key ->
+            assertThat(key).startsWith("local/toilet-images/42/webp/")
+            assertThat(key).endsWith(".webp")
+        }
     }
 
     @Test
     fun `upload - PNG 매직 바이트가 올바르면 성공한다`() {
         val pngBytes = pngMagic() + ByteArray(100)
-        `when`(imageStoragePort.baseFolder()).thenReturn("toilet-images")
+        `when`(imageStoragePort.baseFolder()).thenReturn("local/toilet-images")
         `when`(imageStoragePort.upload(any(), any(), any())).thenReturn("https://cdn.example.com/img.webp")
         `when`(imageConversionPort.toWebP(any(), any(), any())).thenReturn(ByteArray(50))
 
-        val result = imageService.upload(pngBytes, "image/png")
+        val result = imageService.upload(pngBytes, "image/png", userId = 42L)
 
         assertThat(result.url).isNotBlank()
     }
 
     @Test
     fun `upload - 허용되지 않은 contentType은 IMAGE_INVALID_TYPE 예외를 던진다`() {
-        assertThatThrownBy { imageService.upload(ByteArray(10), "image/gif") }
+        assertThatThrownBy { imageService.upload(ByteArray(10), "image/gif", userId = 1L) }
             .isInstanceOf(BusinessException::class.java)
             .extracting { (it as BusinessException).errorCode }
             .isEqualTo(ErrorCode.IMAGE_INVALID_TYPE)
@@ -68,7 +83,7 @@ class ImageServiceTest {
     @Test
     fun `upload - 10MB 초과 파일은 IMAGE_TOO_LARGE 예외를 던진다`() {
         val oversized = ByteArray(10 * 1024 * 1024 + 1)
-        assertThatThrownBy { imageService.upload(oversized, "image/jpeg") }
+        assertThatThrownBy { imageService.upload(oversized, "image/jpeg", userId = 1L) }
             .isInstanceOf(BusinessException::class.java)
             .extracting { (it as BusinessException).errorCode }
             .isEqualTo(ErrorCode.IMAGE_TOO_LARGE)
@@ -77,7 +92,7 @@ class ImageServiceTest {
     @Test
     fun `upload - JPEG contentType이지만 PNG 매직 바이트면 IMAGE_INVALID_TYPE 예외를 던진다`() {
         val pngBytes = pngMagic() + ByteArray(100)
-        assertThatThrownBy { imageService.upload(pngBytes, "image/jpeg") }
+        assertThatThrownBy { imageService.upload(pngBytes, "image/jpeg", userId = 1L) }
             .isInstanceOf(BusinessException::class.java)
             .extracting { (it as BusinessException).errorCode }
             .isEqualTo(ErrorCode.IMAGE_INVALID_TYPE)

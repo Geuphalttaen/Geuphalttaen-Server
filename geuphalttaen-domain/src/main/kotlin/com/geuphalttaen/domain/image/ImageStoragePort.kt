@@ -12,7 +12,7 @@ interface ImageStoragePort {
     fun isOwnUrl(url: String): Boolean
 
     /**
-     * 업로드 기본 폴더 prefix (CF_R2_FOLDER 환경변수).
+     * 업로드 기본 폴더 prefix. 형식: {profile}/{folder}
      */
     fun baseFolder(): String
 }

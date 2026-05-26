@@ -6,3 +6,4 @@ cloudflare:
     bucket-name: ${CF_R2_BUCKET_NAME:}
     public-url: ${CF_R2_PUBLIC_URL:}
     folder: ${CF_R2_FOLDER:toilet-images}
+    profile: ${spring.profiles.active:local}
