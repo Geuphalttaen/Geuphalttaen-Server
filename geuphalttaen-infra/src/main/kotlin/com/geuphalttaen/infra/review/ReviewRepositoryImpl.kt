@@ -37,9 +37,9 @@ class ReviewRepositoryImpl(
 
     override fun findStatsByToiletId(toiletId: Long): ReviewStats {
         val row = jpaRepository.findStatsByToiletId(toiletId)
-        if (row.size < 2) return ReviewStats(null, 0L)
+        if (row.size < 2) return ReviewStats(averageRating = null, reviewCount = 0L)
         val avg = (row[0] as? Number)?.toDouble()
         val count = (row[1] as? Number)?.toLong() ?: 0L
-        return ReviewStats(avg, count)
+        return ReviewStats(averageRating = avg, reviewCount = count)
     }
 }
