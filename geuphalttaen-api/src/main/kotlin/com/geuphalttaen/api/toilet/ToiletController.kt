@@ -12,12 +12,14 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.MediaType
 import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 
 @Tag(name = "Toilet", description = "공중화장실 API")
 @RestController
 @RequestMapping("/api/v1/toilets")
+@Validated
 class ToiletController(
     private val toiletService: ToiletService,
     private val imageService: ImageService,
