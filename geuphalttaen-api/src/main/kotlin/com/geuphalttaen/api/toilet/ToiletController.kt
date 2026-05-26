@@ -45,7 +45,7 @@ class ToiletController(
         @RequestParam("file") file: MultipartFile,
     ): ApiResponse<ImageUploadResponse> {
         val contentType = file.contentType ?: "application/octet-stream"
-        val result = imageService.upload(file.bytes, contentType)
+        val result = imageService.upload(file.bytes, contentType, userId)
         return ApiResponse.ok(ImageUploadResponse(url = result.url, originalUrl = result.originalUrl))
     }
 

@@ -10,4 +10,9 @@ interface ImageStoragePort {
      * 주어진 URL이 자체 R2 버킷에 속하는지 검증한다.
      */
     fun isOwnUrl(url: String): Boolean
+
+    /**
+     * 업로드 기본 폴더 prefix. 형식: {profile}/{folder}
+     */
+    fun baseFolder(): String
 }
