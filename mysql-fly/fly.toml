@@ -1,0 +1,28 @@
+app = "geuphalttaen-mysql"
+primary_region = "nrt"
+
+[build]
+  image = "mysql:8.0"
+
+[deploy]
+  strategy = "immediate"
+
+[env]
+  MYSQL_DATABASE = "geuphalttaen"
+
+[[mounts]]
+  source = "geuphalttaen_mysql_data"
+  destination = "/var/lib/mysql"
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 3306
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1
