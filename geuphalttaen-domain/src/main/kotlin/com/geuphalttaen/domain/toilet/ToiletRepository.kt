@@ -34,12 +34,12 @@ interface ToiletRepository {
     fun countByStatus(status: ToiletStatus): Long
 
     /**
-     * 공공데이터 출처(reportedBy=null) ACTIVE 화장실 전체 조회.
-     * 동기화 후 CSV에서 사라진 항목을 인메모리 필터로 걸러 삭제하는 용도.
+     * 공공데이터 출처(reportedBy=null) ACTIVE 화장실의 주소 목록만 조회.
+     * 동기화 후 CSV에서 사라진 항목을 DB에서 직접 삭제하는 용도.
      */
-    fun findAllActivePublic(): List<ToiletEntity>
+    fun findAllActivePublicAddresses(): List<String>
 
-    fun deleteAll(entities: List<ToiletEntity>)
+    fun deleteAllByAddresses(addresses: Collection<String>)
 
     fun saveImages(images: List<ToiletImageEntity>): List<ToiletImageEntity>
     fun findImagesByToiletId(toiletId: Long): List<ToiletImageEntity>
