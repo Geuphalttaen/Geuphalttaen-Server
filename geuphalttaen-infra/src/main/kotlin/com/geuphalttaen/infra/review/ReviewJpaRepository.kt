@@ -14,6 +14,6 @@ interface ReviewJpaRepository : JpaRepository<ReviewEntity, Long> {
     @Query("SELECT r.toiletId, AVG(r.rating), COUNT(r) FROM ReviewEntity r WHERE r.toiletId IN :toiletIds GROUP BY r.toiletId")
     fun findStatsRawByToiletIds(@Param("toiletIds") toiletIds: List<Long>): List<Array<Any>>
 
-    @Query("SELECT AVG(r.rating), COUNT(r) FROM ReviewEntity r WHERE r.toiletId = :toiletId")
-    fun findStatsByToiletId(@Param("toiletId") toiletId: Long): Array<Any>
+    @Query("SELECT AVG(r.rating), COALESCE(COUNT(r), 0) FROM ReviewEntity r WHERE r.toiletId = :toiletId")
+    fun findStatsByToiletId(@Param("toiletId") toiletId: Long): Array<Any?>
 }

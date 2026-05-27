@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.multipart.MaxUploadSizeExceededException
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
@@ -40,6 +41,15 @@ class GlobalExceptionHandler {
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
             .body(ApiResponse.error("C400", message))
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException::class)
+    fun handleMaxUploadSizeExceeded(e: MaxUploadSizeExceededException): ResponseEntity<ApiResponse<Nothing>> {
+        log.warn("MaxUploadSizeExceededException: maxUploadSize={}, message={}", e.maxUploadSize, e.message)
+        val errorCode = ErrorCode.FILE_TOO_LARGE
+        return ResponseEntity
+            .status(errorCode.status)
+            .body(ApiResponse.error(errorCode.code, errorCode.message))
     }
 
     @ExceptionHandler(Exception::class)
