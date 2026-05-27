@@ -36,7 +36,6 @@ class SyncLogEntity(
     @Column(name = "failed_count", nullable = false)
     var failedCount: Int = 0,
 
-    // EnumType.STRING → DB 컬럼이 VARCHAR(MySQL ENUM 아님), enum 값 추가 시 ALTER TABLE 불필요
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     var status: SyncStatus = SyncStatus.IN_PROGRESS,
