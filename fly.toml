@@ -6,6 +6,7 @@ primary_region = "nrt"
 
 [env]
   SERVER_PORT = "8080"
+  SPRING_PROFILES_ACTIVE = "prod"
 
 [http_service]
   internal_port = 8080
