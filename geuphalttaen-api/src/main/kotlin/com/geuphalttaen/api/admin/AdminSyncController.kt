@@ -1,7 +1,6 @@
 package com.geuphalttaen.api.admin
 
 import com.geuphalttaen.common.response.ApiResponse
-import com.geuphalttaen.domain.sync.SyncAsyncWorker
 import com.geuphalttaen.domain.sync.SyncResultResponse
 import com.geuphalttaen.domain.sync.ToiletSyncService
 import io.swagger.v3.oas.annotations.Operation
@@ -29,7 +28,7 @@ import java.nio.charset.Charset
 @Validated
 class AdminSyncController(
     private val toiletSyncService: ToiletSyncService,
-    private val syncAsyncWorker: SyncAsyncWorker,
+    private val adminSyncService: AdminSyncService,
 ) {
     @Operation(summary = "CSV 파일 업로드로 공공 화장실 데이터 비동기 동기화 (즉시 202 반환, 백그라운드 처리)")
     @PostMapping("/sync/upload", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
@@ -40,9 +39,8 @@ class AdminSyncController(
         }
         // HTTP 요청 종료 전에 바이트를 복사해야 백그라운드 스레드에서 안전하게 접근 가능
         val fileBytes = file.bytes
-        val syncLog = toiletSyncService.createInProgressLog()
         // 행정안전부 공공데이터 포털 CSV는 EUC-KR 인코딩으로 배포됨
-        syncAsyncWorker.run(syncLog.id, fileBytes, Charset.forName("EUC-KR"))
+        val syncLog = adminSyncService.startUploadAsync(fileBytes, Charset.forName("EUC-KR"))
         return ApiResponse.ok(
             SyncResultResponse(
                 id = syncLog.id,
