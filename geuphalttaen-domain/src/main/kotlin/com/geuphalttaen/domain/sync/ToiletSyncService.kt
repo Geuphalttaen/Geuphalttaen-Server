@@ -37,24 +37,24 @@ class ToiletSyncService(
             )
         }
 
-    fun syncFromUpload(inputStream: InputStream, charset: Charset = Charset.forName("EUC-KR")): SyncLogEntity {
-        log.info("공공 화장실 데이터 동기화 시작 (파일 업로드)")
+    fun createInProgressLog(): SyncLogEntity =
+        syncLogRepository.save(SyncLogEntity(status = SyncStatus.IN_PROGRESS))
 
+    /** 파싱·upsert·삭제를 수행하고 미저장 SyncLogEntity 를 반환. 저장은 호출자 책임. */
+    internal fun runSync(fileBytes: ByteArray, charset: Charset): SyncLogEntity {
         val fetchResult = try {
-            toiletDataPort.fetchFromStream(inputStream, charset)
+            toiletDataPort.fetchFromStream(fileBytes.inputStream(), charset)
         } catch (e: RuntimeException) {
             log.error("공공 화장실 데이터 파싱 실패: {}", e.message)
-            return syncLogRepository.save(
-                SyncLogEntity(
-                    totalFetched = 0,
-                    upsertedCount = 0,
-                    insertedCount = 0,
-                    updatedCount = 0,
-                    deletedCount = 0,
-                    failedCount = 0,
-                    status = SyncStatus.FAILED,
-                    errorMessage = e.message,
-                ),
+            return SyncLogEntity(
+                totalFetched = 0,
+                upsertedCount = 0,
+                insertedCount = 0,
+                updatedCount = 0,
+                deletedCount = 0,
+                failedCount = 0,
+                status = SyncStatus.FAILED,
+                errorMessage = e.message,
             )
         }
 
@@ -67,7 +67,6 @@ class ToiletSyncService(
             var updatedCount = 0
             var failedCount = fetchResult.parseFailCount
 
-            // CHUNK_SIZE 단위로 쪼개어 처리 — IN 절 폭발 및 OOM 방지
             val processedAddresses = mutableSetOf<String>()
             for (chunk in externalData.chunked(CHUNK_SIZE)) {
                 val addresses = chunk.map { it.address }
@@ -119,7 +118,6 @@ class ToiletSyncService(
                 log.info("청크 처리 완료: inserted={}, updated={} (누적)", insertedCount, updatedCount)
             }
 
-            // CSV에서 사라진 공공 항목 삭제 — 전체 조회 후 인메모리 필터 (NOT IN 파라미터 폭발 방지)
             val deletedCount = if (processedAddresses.isNotEmpty()) {
                 val stale = toiletRepository.findAllActivePublic()
                     .filter { it.address !in processedAddresses }
@@ -138,7 +136,12 @@ class ToiletSyncService(
                 else -> SyncStatus.SUCCESS
             }
 
-            val syncLog = SyncLogEntity(
+            log.info(
+                "공공 화장실 동기화 완료: total={}, inserted={}, updated={}, deleted={}, failed={}, status={}",
+                totalFetched, insertedCount, updatedCount, deletedCount, failedCount, status,
+            )
+
+            SyncLogEntity(
                 totalFetched = totalFetched,
                 upsertedCount = insertedCount + updatedCount,
                 insertedCount = insertedCount,
@@ -147,27 +150,23 @@ class ToiletSyncService(
                 failedCount = failedCount,
                 status = status,
             )
-            val saved = syncLogRepository.save(syncLog)
-
-            log.info(
-                "공공 화장실 동기화 완료: total={}, inserted={}, updated={}, deleted={}, failed={}, status={}",
-                totalFetched, insertedCount, updatedCount, deletedCount, failedCount, status,
-            )
-            saved
         } catch (e: Exception) {
             log.error("공공 화장실 동기화 처리 중 오류 발생: {}", e.message)
-            syncLogRepository.save(
-                SyncLogEntity(
-                    totalFetched = fetchResult.items.size + fetchResult.parseFailCount,
-                    upsertedCount = 0,
-                    insertedCount = 0,
-                    updatedCount = 0,
-                    deletedCount = 0,
-                    failedCount = fetchResult.items.size + fetchResult.parseFailCount,
-                    status = SyncStatus.FAILED,
-                    errorMessage = e.message,
-                ),
+            SyncLogEntity(
+                totalFetched = fetchResult.items.size + fetchResult.parseFailCount,
+                upsertedCount = 0,
+                insertedCount = 0,
+                updatedCount = 0,
+                deletedCount = 0,
+                failedCount = fetchResult.items.size + fetchResult.parseFailCount,
+                status = SyncStatus.FAILED,
+                errorMessage = e.message,
             )
         }
+    }
+
+    fun syncFromUpload(inputStream: InputStream, charset: Charset = Charset.forName("EUC-KR")): SyncLogEntity {
+        log.info("공공 화장실 데이터 동기화 시작 (파일 업로드)")
+        return syncLogRepository.save(runSync(inputStream.readBytes(), charset))
     }
 }
