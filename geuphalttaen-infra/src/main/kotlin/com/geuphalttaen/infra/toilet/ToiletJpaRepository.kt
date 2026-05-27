@@ -2,10 +2,10 @@ package com.geuphalttaen.infra.toilet
 
 import com.geuphalttaen.core.entity.ToiletEntity
 import com.geuphalttaen.core.entity.ToiletStatus
-import jakarta.transaction.Transactional
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
+import org.springframework.transaction.annotation.Transactional
 
 interface ToiletJpaRepository : JpaRepository<ToiletEntity, Long> {
     fun findByAddress(address: String): ToiletEntity?
@@ -19,7 +19,7 @@ interface ToiletJpaRepository : JpaRepository<ToiletEntity, Long> {
     fun findAllAddressByReportedByIsNullAndStatus(status: ToiletStatus): List<String>
 
     @Transactional
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("DELETE FROM ToiletEntity t WHERE t.address IN :addresses")
     fun deleteByAddressIn(addresses: Collection<String>)
 }
