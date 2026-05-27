@@ -119,13 +119,13 @@ class ToiletSyncService(
             }
 
             val deletedCount = if (processedAddresses.isNotEmpty()) {
-                val stale = toiletRepository.findAllActivePublic()
-                    .filter { it.address !in processedAddresses }
-                if (stale.isNotEmpty()) {
-                    toiletRepository.deleteAll(stale)
-                    log.info("공공 화장실 삭제: {}건", stale.size)
+                val dbAddresses = toiletRepository.findAllActivePublicAddresses().toSet()
+                val staleAddresses = dbAddresses - processedAddresses
+                if (staleAddresses.isNotEmpty()) {
+                    toiletRepository.deleteAllByAddresses(staleAddresses)
+                    log.info("공공 화장실 삭제: {}건", staleAddresses.size)
                 }
-                stale.size
+                staleAddresses.size
             } else {
                 0
             }
