@@ -69,7 +69,7 @@ class ToiletRepositoryImpl(
         jpaRepository.findAllAddressByReportedByIsNullAndStatus(ToiletStatus.ACTIVE)
 
     override fun deleteAllByAddresses(addresses: Collection<String>) =
-        jpaRepository.deleteByAddressIn(addresses)
+        addresses.chunked(1_000).forEach { jpaRepository.deleteByAddressIn(it) }
 
     override fun saveImages(images: List<ToiletImageEntity>): List<ToiletImageEntity> =
         imageJpaRepository.saveAll(images)

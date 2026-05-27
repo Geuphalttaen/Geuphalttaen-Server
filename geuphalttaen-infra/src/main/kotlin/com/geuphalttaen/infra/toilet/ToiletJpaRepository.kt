@@ -19,7 +19,7 @@ interface ToiletJpaRepository : JpaRepository<ToiletEntity, Long> {
     fun findAllAddressByReportedByIsNullAndStatus(status: ToiletStatus): List<String>
 
     @Transactional
-    @Modifying(clearAutomatically = true)
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM ToiletEntity t WHERE t.address IN :addresses")
     fun deleteByAddressIn(addresses: Collection<String>)
 }
