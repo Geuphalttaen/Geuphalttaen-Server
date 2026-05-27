@@ -32,7 +32,7 @@ class ToiletSyncServiceTest {
         whenever(syncLogRepository.save(any())).thenAnswer { it.arguments[0] as SyncLogEntity }
         whenever(toiletRepository.saveAll(any<List<ToiletEntity>>())).thenAnswer { it.arguments[0] as List<ToiletEntity> }
         whenever(toiletRepository.findAllByAddressIn(any())).thenReturn(emptyList())
-        whenever(toiletRepository.findAllActivePublic()).thenReturn(emptyList())
+        whenever(toiletRepository.findAllActivePublicAddresses()).thenReturn(emptyList())
     }
 
     private fun makeResult(vararg addresses: String): ToiletFetchResult = ToiletFetchResult(
@@ -124,15 +124,14 @@ class ToiletSyncServiceTest {
 
     @Test
     fun `syncFromUpload - CSV에서 사라진 공공 항목 삭제, deletedCount 반영`() {
-        val staleToilet = ToiletEntity(id = 99L, name = "삭제될화장실", address = "구 주소", lat = 37.0, lng = 127.0)
         whenever(toiletDataPort.fetchFromStream(any(), any())).thenReturn(makeResult("새 주소"))
         whenever(toiletRepository.findAllByAddressIn(any())).thenReturn(emptyList())
-        whenever(toiletRepository.findAllActivePublic()).thenReturn(listOf(staleToilet))
+        whenever(toiletRepository.findAllActivePublicAddresses()).thenReturn(listOf("구 주소", "새 주소"))
 
         val result = toiletSyncService.syncFromUpload(emptyInputStream)
 
         assertThat(result.deletedCount).isEqualTo(1)
-        verify(toiletRepository, times(1)).deleteAll(listOf(staleToilet))
+        verify(toiletRepository, times(1)).deleteAllByAddresses(setOf("구 주소"))
     }
 
     @Test
