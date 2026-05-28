@@ -76,4 +76,13 @@ class ReviewController(
     ): ApiResponse<CleanlinessResponse> {
         return ApiResponse.ok(cleanlinessService.upsert(userId, id, request))
     }
+
+    @Operation(summary = "내 청결도 조회 (인증 필요) — 평가한 적 없으면 null 반환", security = [SecurityRequirement(name = "bearerAuth")])
+    @GetMapping("/cleanliness/my")
+    fun getMyCleanliness(
+        @AuthenticationPrincipal userId: Long,
+        @PathVariable id: Long,
+    ): ApiResponse<CleanlinessResponse?> {
+        return ApiResponse.ok(cleanlinessService.getMyCleanliness(userId, id))
+    }
 }
