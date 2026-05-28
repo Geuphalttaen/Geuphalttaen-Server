@@ -49,8 +49,9 @@ class CleanlinessServiceTest {
         val result = cleanlinessService.getMyCleanliness(userId, toiletId)
 
         assertThat(result).isNotNull
-        assertThat(result!!.score).isEqualTo(4)
+        assertThat(result!!.toiletId).isEqualTo(toiletId)
         assertThat(result.userId).isEqualTo(userId)
+        assertThat(result.score).isEqualTo(4)
     }
 
     @Test
