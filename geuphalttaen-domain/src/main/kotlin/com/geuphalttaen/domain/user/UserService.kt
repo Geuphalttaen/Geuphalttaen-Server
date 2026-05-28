@@ -27,6 +27,20 @@ class UserService(
         )
     }
 
+    fun updateNickname(userId: Long, request: UpdateNicknameRequest): UserProfileResponse {
+        val user = userRepository.findById(userId) ?: throw BusinessException(ErrorCode.USER_NOT_FOUND)
+        user.nickname = request.nickname
+        userRepository.save(user)
+        val reportCount = toiletRepository.countByReportedBy(userId)
+        val postedCount = toiletRepository.countByReportedByAndStatus(userId, ToiletStatus.ACTIVE)
+        return UserProfileResponse(
+            nickname = user.nickname,
+            provider = user.provider.name,
+            reportCount = reportCount.toInt(),
+            postedCount = postedCount.toInt(),
+        )
+    }
+
     fun getMyReports(userId: Long): List<MyReportResponse> {
         userRepository.findById(userId) ?: throw BusinessException(ErrorCode.USER_NOT_FOUND)
         return toiletRepository.findByReportedByOrderByCreatedAtDesc(userId).map { toilet ->
