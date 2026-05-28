@@ -7,6 +7,7 @@ import com.geuphalttaen.core.entity.ToiletEntity
 import com.geuphalttaen.core.entity.ToiletStatus
 import com.geuphalttaen.domain.auth.JwtProperties
 import com.geuphalttaen.domain.auth.JwtProvider
+import com.geuphalttaen.domain.image.ImageService
 import com.geuphalttaen.domain.toilet.ToiletRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -35,6 +36,9 @@ class AdminServiceTest {
     @Mock
     private lateinit var toiletRepository: ToiletRepository
 
+    @Mock
+    private lateinit var imageService: ImageService
+
     private lateinit var jwtProvider: JwtProvider
     private lateinit var adminService: AdminService
     private lateinit var passwordEncoder: BCryptPasswordEncoder
@@ -52,6 +56,7 @@ class AdminServiceTest {
             jwtProvider,
             passwordEncoder,
             AdminProperties(seedSecret = testSeedSecret),
+            imageService,
         )
     }
 

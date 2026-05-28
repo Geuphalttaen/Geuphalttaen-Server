@@ -5,6 +5,7 @@ import com.geuphalttaen.common.exception.ErrorCode
 import com.geuphalttaen.core.entity.AdminEntity
 import com.geuphalttaen.core.entity.ToiletStatus
 import com.geuphalttaen.domain.auth.JwtProvider
+import com.geuphalttaen.domain.image.ImageService
 import com.geuphalttaen.domain.toilet.AdminToiletResponse
 import com.geuphalttaen.domain.toilet.AdminToiletUpdateRequest
 import com.geuphalttaen.domain.toilet.ToiletRepository
@@ -26,6 +27,7 @@ class AdminService(
     private val jwtProvider: JwtProvider,
     private val passwordEncoder: PasswordEncoder,
     private val adminProperties: AdminProperties,
+    private val imageService: ImageService,
 ) {
 
     /**
@@ -88,7 +90,7 @@ class AdminService(
     fun getReports(status: ToiletStatus?, pageable: Pageable): Page<AdminToiletResponse> {
         val page = toiletRepository.findByStatusPageable(status, pageable)
         val imageMap = toiletRepository.findImagesByToiletIds(page.content.map { it.id })
-            .groupBy({ it.toiletId }, { it.url })
+            .groupBy({ it.toiletId }, { imageService.toPublicUrl(it.url) })
         return page.map { it.toAdminResponse(imageMap[it.id] ?: emptyList()) }
     }
 
@@ -98,7 +100,7 @@ class AdminService(
     @Transactional(readOnly = true)
     fun getReport(id: Long): AdminToiletResponse {
         val entity = toiletRepository.findById(id) ?: throw BusinessException(ErrorCode.TOILET_NOT_FOUND)
-        val imageUrls = toiletRepository.findImagesByToiletId(id).map { it.url }
+        val imageUrls = toiletRepository.findImagesByToiletId(id).map { imageService.toPublicUrl(it.url) }
         return entity.toAdminResponse(imageUrls)
     }
 
@@ -112,7 +114,7 @@ class AdminService(
             throw BusinessException(ErrorCode.TOILET_STATUS_INVALID)
         }
         entity.status = ToiletStatus.ACTIVE
-        val imageUrls = toiletRepository.findImagesByToiletId(id).map { it.url }
+        val imageUrls = toiletRepository.findImagesByToiletId(id).map { imageService.toPublicUrl(it.url) }
         return entity.toAdminResponse(imageUrls)
     }
 
@@ -126,7 +128,7 @@ class AdminService(
             throw BusinessException(ErrorCode.TOILET_STATUS_INVALID)
         }
         entity.status = ToiletStatus.REJECTED
-        val imageUrls = toiletRepository.findImagesByToiletId(id).map { it.url }
+        val imageUrls = toiletRepository.findImagesByToiletId(id).map { imageService.toPublicUrl(it.url) }
         return entity.toAdminResponse(imageUrls)
     }
 
@@ -141,7 +143,7 @@ class AdminService(
     fun getToilets(keyword: String?, pageable: Pageable): Page<AdminToiletResponse> {
         val page = toiletRepository.findByKeywordPageable(keyword, pageable)
         val imageMap = toiletRepository.findImagesByToiletIds(page.content.map { it.id })
-            .groupBy({ it.toiletId }, { it.url })
+            .groupBy({ it.toiletId }, { imageService.toPublicUrl(it.url) })
         return page.map { it.toAdminResponse(imageMap[it.id] ?: emptyList()) }
     }
 
@@ -151,7 +153,7 @@ class AdminService(
     @Transactional(readOnly = true)
     fun getToilet(id: Long): AdminToiletResponse {
         val entity = toiletRepository.findById(id) ?: throw BusinessException(ErrorCode.TOILET_NOT_FOUND)
-        val imageUrls = toiletRepository.findImagesByToiletId(id).map { it.url }
+        val imageUrls = toiletRepository.findImagesByToiletId(id).map { imageService.toPublicUrl(it.url) }
         return entity.toAdminResponse(imageUrls)
     }
 
@@ -171,7 +173,7 @@ class AdminService(
         request.female?.let { entity.female = it }
         request.disabled?.let { entity.disabled = it }
         request.familyRoom?.let { entity.familyRoom = it }
-        val imageUrls = toiletRepository.findImagesByToiletId(id).map { it.url }
+        val imageUrls = toiletRepository.findImagesByToiletId(id).map { imageService.toPublicUrl(it.url) }
         return entity.toAdminResponse(imageUrls)
     }
 
