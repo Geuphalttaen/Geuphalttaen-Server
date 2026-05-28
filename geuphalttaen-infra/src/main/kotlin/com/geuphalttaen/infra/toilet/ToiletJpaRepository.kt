@@ -5,6 +5,7 @@ import com.geuphalttaen.core.entity.ToiletStatus
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import org.springframework.transaction.annotation.Transactional
 
 interface ToiletJpaRepository : JpaRepository<ToiletEntity, Long> {
@@ -24,7 +25,7 @@ interface ToiletJpaRepository : JpaRepository<ToiletEntity, Long> {
     fun deleteByAddressIn(addresses: Collection<String>)
 
     @Transactional
-    @Modifying(clearAutomatically = true)
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE ToiletEntity t SET t.reportedBy = null WHERE t.reportedBy = :userId")
     fun nullifyReportedBy(@Param("userId") userId: Long)
 }

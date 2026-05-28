@@ -11,6 +11,8 @@ import com.geuphalttaen.domain.review.ReviewRepository
 import com.geuphalttaen.domain.toilet.ToiletRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.support.TransactionSynchronization
+import org.springframework.transaction.support.TransactionSynchronizationManager
 import java.time.format.DateTimeFormatter
 
 @Service
@@ -50,11 +52,19 @@ class UserService(
     @Transactional
     fun deleteAccount(userId: Long) {
         val user = userRepository.findById(userId) ?: throw BusinessException(ErrorCode.USER_NOT_FOUND)
+        // 1. 리뷰 / 청결도 삭제
         reviewRepository.deleteAllByUserId(userId)
         cleanlinessRepository.deleteAllByUserId(userId)
+        // 2. 제보 화장실 소유권 해제 (화장실 데이터는 보존)
         toiletRepository.nullifyReportedBy(userId)
-        refreshTokenRepository.delete(userId)
+        // 3. 유저 계정 삭제
         userRepository.delete(user)
+        // 4. RefreshToken 삭제 — Redis는 JPA 트랜잭션에 참여하지 않으므로 커밋 확정 후 실행
+        TransactionSynchronizationManager.registerSynchronization(object : TransactionSynchronization {
+            override fun afterCommit() {
+                refreshTokenRepository.delete(userId)
+            }
+        })
     }
 
     fun getMyReports(userId: Long): List<MyReportResponse> {

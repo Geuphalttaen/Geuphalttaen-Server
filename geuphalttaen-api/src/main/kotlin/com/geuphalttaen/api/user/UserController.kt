@@ -6,6 +6,7 @@ import com.geuphalttaen.domain.user.UpdateNicknameRequest
 import com.geuphalttaen.domain.user.UserProfileResponse
 import com.geuphalttaen.domain.user.UserService
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -42,11 +43,12 @@ class UserController(
         ApiResponse.ok(userService.updateNickname(userId, request))
 
     @Operation(summary = "회원 탈퇴")
+    @SecurityRequirement(name = "bearerAuth")
     @DeleteMapping("/me")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun deleteAccount(
         @AuthenticationPrincipal userId: Long,
-    ) = userService.deleteAccount(userId)
+    ): Unit = userService.deleteAccount(userId)
 
     @Operation(summary = "내 제보 목록 조회")
     @GetMapping("/me/reports")
