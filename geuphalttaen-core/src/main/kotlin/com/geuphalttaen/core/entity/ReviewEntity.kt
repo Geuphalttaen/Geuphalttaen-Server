@@ -12,6 +12,6 @@ class ReviewEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) val id: Long = 0,
     @Column(name = "toilet_id", nullable = false) val toiletId: Long,
     @Column(name = "user_id", nullable = false) val userId: Long,
-    @Column(nullable = false) val rating: Int,
-    @Column(length = 200) val content: String? = null,
+    @Column(nullable = false) var rating: Int,
+    @Column(length = 200) var content: String? = null,
 ) : BaseEntity()

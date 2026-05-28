@@ -30,6 +30,22 @@ class ReviewService(
         return reviewRepository.findByToiletIdPageable(toiletId, pageable).map { it.toResponse() }
     }
 
+    @Transactional(readOnly = true)
+    fun getMyReview(userId: Long, toiletId: Long): ReviewResponse? {
+        toiletRepository.findById(toiletId) ?: throw BusinessException(ErrorCode.TOILET_NOT_FOUND)
+        return reviewRepository.findByToiletIdAndUserId(toiletId, userId)?.toResponse()
+    }
+
+    @Transactional
+    fun updateMyReview(userId: Long, toiletId: Long, request: ReviewRequest): ReviewResponse {
+        toiletRepository.findById(toiletId) ?: throw BusinessException(ErrorCode.TOILET_NOT_FOUND)
+        val entity = reviewRepository.findByToiletIdAndUserId(toiletId, userId)
+            ?: throw BusinessException(ErrorCode.REVIEW_NOT_FOUND)
+        entity.rating = request.rating
+        entity.content = request.content
+        return reviewRepository.save(entity).toResponse()
+    }
+
     // 관리자용 — 화장실 존재 여부 검증 없이 조회
     @Transactional(readOnly = true)
     fun getReviewsForAdmin(toiletId: Long, pageable: Pageable): Page<ReviewResponse> {

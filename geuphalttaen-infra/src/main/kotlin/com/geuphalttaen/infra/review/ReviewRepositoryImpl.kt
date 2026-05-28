@@ -21,6 +21,9 @@ class ReviewRepositoryImpl(
     override fun existsByToiletIdAndUserId(toiletId: Long, userId: Long): Boolean =
         jpaRepository.existsByToiletIdAndUserId(toiletId, userId)
 
+    override fun findByToiletIdAndUserId(toiletId: Long, userId: Long): ReviewEntity? =
+        jpaRepository.findByToiletIdAndUserId(toiletId, userId)
+
     override fun findByToiletIdPageable(toiletId: Long, pageable: Pageable): Page<ReviewEntity> =
         jpaRepository.findAllByToiletId(toiletId, pageable)
 
