@@ -15,6 +15,7 @@ data class ReviewResponse(
     val id: Long,
     val toiletId: Long,
     val userId: Long,
+    val nickname: String?,
     val rating: Int,
     val content: String?,
     val createdAt: LocalDateTime,
@@ -30,4 +31,5 @@ data class CleanlinessResponse(
     val score: Int,
 )
 
-fun ReviewEntity.toResponse() = ReviewResponse(id, toiletId, userId, rating, content, createdAt)
+fun ReviewEntity.toResponse(nickname: String? = null) =
+    ReviewResponse(id, toiletId, userId, nickname, rating, content, createdAt)

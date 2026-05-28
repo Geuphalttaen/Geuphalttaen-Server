@@ -17,5 +17,9 @@ class UserRepositoryImpl(
 
     override fun findById(id: Long): UserEntity? = jpaRepository.findById(id).orElse(null)
 
+    override fun findAllByIds(ids: List<Long>): List<UserEntity> = jpaRepository.findAllByIdIn(ids)
+
     override fun save(entity: UserEntity): UserEntity = jpaRepository.save(entity)
+
+    override fun delete(entity: UserEntity) = jpaRepository.delete(entity)
 }

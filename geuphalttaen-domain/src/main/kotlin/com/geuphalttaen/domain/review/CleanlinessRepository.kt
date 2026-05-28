@@ -7,4 +7,5 @@ interface CleanlinessRepository {
     fun save(entity: CleanlinessEntity): CleanlinessEntity
     fun findAverageByToiletId(toiletId: Long): Double?
     fun findAveragesByToiletIds(toiletIds: List<Long>): Map<Long, Double>
+    fun deleteAllByUserId(userId: Long)
 }

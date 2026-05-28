@@ -2,9 +2,12 @@ package com.geuphalttaen.domain.review
 
 import com.geuphalttaen.common.exception.BusinessException
 import com.geuphalttaen.common.exception.ErrorCode
+import com.geuphalttaen.core.entity.OAuthProvider
 import com.geuphalttaen.core.entity.ReviewEntity
 import com.geuphalttaen.core.entity.ToiletEntity
 import com.geuphalttaen.core.entity.ToiletStatus
+import com.geuphalttaen.core.entity.UserEntity
+import com.geuphalttaen.domain.auth.UserRepository
 import com.geuphalttaen.domain.toilet.ToiletRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -29,11 +32,14 @@ class ReviewServiceTest {
     @Mock
     private lateinit var toiletRepository: ToiletRepository
 
+    @Mock
+    private lateinit var userRepository: UserRepository
+
     private lateinit var reviewService: ReviewService
 
     @BeforeEach
     fun setUp() {
-        reviewService = ReviewService(reviewRepository, toiletRepository)
+        reviewService = ReviewService(reviewRepository, toiletRepository, userRepository)
     }
 
     // ──────────────────────────────────────────
@@ -50,6 +56,7 @@ class ReviewServiceTest {
         `when`(toiletRepository.findById(toiletId)).thenReturn(makeToiletEntity(toiletId))
         `when`(reviewRepository.existsByToiletIdAndUserId(toiletId, userId)).thenReturn(false)
         `when`(reviewRepository.save(anyNonNull(ReviewEntity::class.java))).thenReturn(entity)
+        `when`(userRepository.findById(userId)).thenReturn(makeUserEntity(userId, "테스터"))
 
         val result = reviewService.addReview(userId, toiletId, request)
 
@@ -57,6 +64,7 @@ class ReviewServiceTest {
         assertThat(result.userId).isEqualTo(userId)
         assertThat(result.rating).isEqualTo(4)
         assertThat(result.content).isEqualTo("깨끗해요")
+        assertThat(result.nickname).isEqualTo("테스터")
     }
 
     @Test
@@ -93,16 +101,19 @@ class ReviewServiceTest {
     @Test
     fun `getReviews - 화장실 리뷰 목록을 페이징 조회한다`() {
         val toiletId = 1L
+        val userId = 10L
         val pageable = PageRequest.of(0, 10)
-        val entities = listOf(makeReviewEntity(id = 1L, toiletId = toiletId, userId = 10L, rating = 4))
+        val entities = listOf(makeReviewEntity(id = 1L, toiletId = toiletId, userId = userId, rating = 4))
         `when`(toiletRepository.findById(toiletId)).thenReturn(makeToiletEntity(toiletId))
         `when`(reviewRepository.findByToiletIdPageable(toiletId, pageable))
             .thenReturn(PageImpl(entities, pageable, 1L))
+        `when`(userRepository.findAllByIds(listOf(userId))).thenReturn(listOf(makeUserEntity(userId, "테스터")))
 
         val result = reviewService.getReviews(toiletId, pageable)
 
         assertThat(result.totalElements).isEqualTo(1)
         assertThat(result.content[0].rating).isEqualTo(4)
+        assertThat(result.content[0].nickname).isEqualTo("테스터")
     }
 
     @Test
@@ -253,4 +264,7 @@ class ReviewServiceTest {
         rating = rating,
         content = content,
     )
+
+    private fun makeUserEntity(id: Long = 1L, nickname: String = "사용자"): UserEntity =
+        UserEntity(id = id, provider = OAuthProvider.KAKAO, providerId = "kakao_$id", nickname = nickname)
 }
