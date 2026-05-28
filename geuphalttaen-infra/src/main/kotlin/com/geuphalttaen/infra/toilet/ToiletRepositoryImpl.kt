@@ -123,4 +123,6 @@ class ToiletRepositoryImpl(
 
         return PageImpl(content, pageable, total)
     }
+
+    override fun nullifyReportedBy(userId: Long) = jpaRepository.nullifyReportedBy(userId)
 }

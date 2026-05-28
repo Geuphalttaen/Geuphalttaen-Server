@@ -44,4 +44,5 @@ interface ToiletRepository {
     fun saveImages(images: List<ToiletImageEntity>): List<ToiletImageEntity>
     fun findImagesByToiletId(toiletId: Long): List<ToiletImageEntity>
     fun findImagesByToiletIds(toiletIds: List<Long>): List<ToiletImageEntity>
+    fun nullifyReportedBy(userId: Long)
 }

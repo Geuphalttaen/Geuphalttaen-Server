@@ -4,8 +4,10 @@ import com.geuphalttaen.core.entity.ReviewEntity
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
+import org.springframework.transaction.annotation.Transactional
 
 interface ReviewJpaRepository : JpaRepository<ReviewEntity, Long> {
     fun existsByToiletIdAndUserId(toiletId: Long, userId: Long): Boolean
@@ -17,4 +19,9 @@ interface ReviewJpaRepository : JpaRepository<ReviewEntity, Long> {
 
     @Query("SELECT AVG(r.rating), COALESCE(COUNT(r), 0) FROM ReviewEntity r WHERE r.toiletId = :toiletId")
     fun findStatsByToiletId(@Param("toiletId") toiletId: Long): Array<Any?>
+
+    @Transactional
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM ReviewEntity r WHERE r.userId = :userId")
+    fun deleteAllByUserId(@Param("userId") userId: Long)
 }

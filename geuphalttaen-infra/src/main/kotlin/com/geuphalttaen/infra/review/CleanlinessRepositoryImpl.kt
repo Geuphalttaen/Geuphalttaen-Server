@@ -26,4 +26,6 @@ class CleanlinessRepositoryImpl(
             toiletId to avg
         }
     }
+
+    override fun deleteAllByUserId(userId: Long) = jpaRepository.deleteAllByUserId(userId)
 }
