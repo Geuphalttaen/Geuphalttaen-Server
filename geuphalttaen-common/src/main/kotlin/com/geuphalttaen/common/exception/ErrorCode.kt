@@ -25,7 +25,6 @@ enum class ErrorCode(
 
     // 사용자 에러
     USER_NOT_FOUND("U001", HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),
-    NICKNAME_INVALID("U002", HttpStatus.BAD_REQUEST, "닉네임은 1자 이상 20자 이하여야 합니다."),
 
     // 경로 에러
     ROUTE_NOT_FOUND("R001", HttpStatus.UNPROCESSABLE_ENTITY, "경로를 찾을 수 없습니다."),

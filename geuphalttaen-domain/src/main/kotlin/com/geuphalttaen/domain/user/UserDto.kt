@@ -13,7 +13,7 @@ data class UserProfileResponse(
 
 data class UpdateNicknameRequest(
     @field:NotBlank
-    @field:Size(min = 1, max = 20)
+    @field:Size(max = 20)
     val nickname: String,
 )
 
