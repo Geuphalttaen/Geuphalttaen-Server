@@ -4,7 +4,10 @@ import com.geuphalttaen.common.exception.BusinessException
 import com.geuphalttaen.common.exception.ErrorCode
 import com.geuphalttaen.core.entity.ToiletStatus
 import com.geuphalttaen.core.entity.UserEntity
+import com.geuphalttaen.domain.auth.RefreshTokenRepository
 import com.geuphalttaen.domain.auth.UserRepository
+import com.geuphalttaen.domain.review.CleanlinessRepository
+import com.geuphalttaen.domain.review.ReviewRepository
 import com.geuphalttaen.domain.toilet.ToiletRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -14,6 +17,9 @@ import java.time.format.DateTimeFormatter
 class UserService(
     private val userRepository: UserRepository,
     private val toiletRepository: ToiletRepository,
+    private val reviewRepository: ReviewRepository,
+    private val cleanlinessRepository: CleanlinessRepository,
+    private val refreshTokenRepository: RefreshTokenRepository,
 ) {
     private val formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd")
 
@@ -39,6 +45,16 @@ class UserService(
             reportCount = reportCount.toInt(),
             postedCount = postedCount.toInt(),
         )
+    }
+
+    @Transactional
+    fun deleteAccount(userId: Long) {
+        val user = userRepository.findById(userId) ?: throw BusinessException(ErrorCode.USER_NOT_FOUND)
+        reviewRepository.deleteAllByUserId(userId)
+        cleanlinessRepository.deleteAllByUserId(userId)
+        toiletRepository.nullifyReportedBy(userId)
+        refreshTokenRepository.delete(userId)
+        userRepository.delete(user)
     }
 
     fun getMyReports(userId: Long): List<MyReportResponse> {

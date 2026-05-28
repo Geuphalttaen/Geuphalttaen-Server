@@ -13,6 +13,7 @@ interface ReviewRepository {
     fun findByToiletIdPageable(toiletId: Long, pageable: Pageable): Page<ReviewEntity>
     fun findStatsByToiletIds(toiletIds: List<Long>): Map<Long, ReviewStats>
     fun findStatsByToiletId(toiletId: Long): ReviewStats
+    fun deleteAllByUserId(userId: Long)
 }
 
 data class ReviewStats(val averageRating: Double?, val reviewCount: Long)

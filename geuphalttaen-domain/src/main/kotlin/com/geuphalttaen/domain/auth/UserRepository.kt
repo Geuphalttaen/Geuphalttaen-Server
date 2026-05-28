@@ -7,4 +7,5 @@ interface UserRepository {
     fun findById(id: Long): UserEntity?
     fun findAllByIds(ids: List<Long>): List<UserEntity>
     fun save(entity: UserEntity): UserEntity
+    fun delete(entity: UserEntity)
 }

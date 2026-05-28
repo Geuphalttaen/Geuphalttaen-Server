@@ -5,7 +5,10 @@ import com.geuphalttaen.common.exception.ErrorCode
 import com.geuphalttaen.core.entity.OAuthProvider
 import com.geuphalttaen.core.entity.ToiletStatus
 import com.geuphalttaen.core.entity.UserEntity
+import com.geuphalttaen.domain.auth.RefreshTokenRepository
 import com.geuphalttaen.domain.auth.UserRepository
+import com.geuphalttaen.domain.review.CleanlinessRepository
+import com.geuphalttaen.domain.review.ReviewRepository
 import com.geuphalttaen.domain.toilet.ToiletRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -26,11 +29,20 @@ class UserServiceTest {
     @Mock
     private lateinit var toiletRepository: ToiletRepository
 
+    @Mock
+    private lateinit var reviewRepository: ReviewRepository
+
+    @Mock
+    private lateinit var cleanlinessRepository: CleanlinessRepository
+
+    @Mock
+    private lateinit var refreshTokenRepository: RefreshTokenRepository
+
     private lateinit var userService: UserService
 
     @BeforeEach
     fun setUp() {
-        userService = UserService(userRepository, toiletRepository)
+        userService = UserService(userRepository, toiletRepository, reviewRepository, cleanlinessRepository, refreshTokenRepository)
     }
 
     // ──────────────────────────────────────────
@@ -88,6 +100,35 @@ class UserServiceTest {
         assertThatThrownBy {
             userService.updateNickname(999L, UpdateNicknameRequest(nickname = "닉네임"))
         }
+            .isInstanceOf(BusinessException::class.java)
+            .extracting { (it as BusinessException).errorCode }
+            .isEqualTo(ErrorCode.USER_NOT_FOUND)
+    }
+
+    // ──────────────────────────────────────────
+    // deleteAccount
+    // ──────────────────────────────────────────
+
+    @Test
+    fun `deleteAccount - 리뷰, 청결도, 토큰을 삭제하고 사용자를 탈퇴 처리한다`() {
+        val userId = 1L
+        val user = makeUser(userId)
+        `when`(userRepository.findById(userId)).thenReturn(user)
+
+        userService.deleteAccount(userId)
+
+        verify(reviewRepository).deleteAllByUserId(userId)
+        verify(cleanlinessRepository).deleteAllByUserId(userId)
+        verify(toiletRepository).nullifyReportedBy(userId)
+        verify(refreshTokenRepository).delete(userId)
+        verify(userRepository).delete(user)
+    }
+
+    @Test
+    fun `deleteAccount - 사용자가 없으면 USER_NOT_FOUND 예외를 던진다`() {
+        `when`(userRepository.findById(999L)).thenReturn(null)
+
+        assertThatThrownBy { userService.deleteAccount(999L) }
             .isInstanceOf(BusinessException::class.java)
             .extracting { (it as BusinessException).errorCode }
             .isEqualTo(ErrorCode.USER_NOT_FOUND)
