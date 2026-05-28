@@ -28,6 +28,7 @@ class UserController(
     private val userService: UserService,
 ) {
     @Operation(summary = "내 프로필 조회")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/me")
     fun getMyProfile(
         @AuthenticationPrincipal userId: Long,
@@ -35,6 +36,7 @@ class UserController(
         ApiResponse.ok(userService.getProfile(userId))
 
     @Operation(summary = "닉네임 수정")
+    @SecurityRequirement(name = "bearerAuth")
     @PatchMapping("/me")
     fun updateNickname(
         @AuthenticationPrincipal userId: Long,
@@ -51,6 +53,7 @@ class UserController(
     ): Unit = userService.deleteAccount(userId)
 
     @Operation(summary = "내 제보 목록 조회")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/me/reports")
     fun getMyReports(
         @AuthenticationPrincipal userId: Long,

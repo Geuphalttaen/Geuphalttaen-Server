@@ -21,7 +21,7 @@ interface ReviewJpaRepository : JpaRepository<ReviewEntity, Long> {
     fun findStatsByToiletId(@Param("toiletId") toiletId: Long): Array<Any?>
 
     @Transactional
-    @Modifying(clearAutomatically = true)
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM ReviewEntity r WHERE r.userId = :userId")
     fun deleteAllByUserId(@Param("userId") userId: Long)
 }

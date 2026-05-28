@@ -15,10 +15,15 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.ArgumentCaptor
 import org.mockito.Mock
+import org.mockito.Mockito.mockStatic
+import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.mockito.junit.jupiter.MockitoExtension
+import org.springframework.transaction.support.TransactionSynchronization
+import org.springframework.transaction.support.TransactionSynchronizationManager
 
 @ExtendWith(MockitoExtension::class)
 class UserServiceTest {
@@ -110,18 +115,39 @@ class UserServiceTest {
     // ──────────────────────────────────────────
 
     @Test
-    fun `deleteAccount - 리뷰, 청결도, 토큰을 삭제하고 사용자를 탈퇴 처리한다`() {
+    fun `deleteAccount - DB 삭제 작업과 afterCommit 콜백 등록을 수행한다`() {
         val userId = 1L
         val user = makeUser(userId)
         `when`(userRepository.findById(userId)).thenReturn(user)
+        val syncCaptor = ArgumentCaptor.forClass(TransactionSynchronization::class.java)
 
-        userService.deleteAccount(userId)
+        mockStatic(TransactionSynchronizationManager::class.java).use { mocked ->
+            userService.deleteAccount(userId)
+            mocked.verify { TransactionSynchronizationManager.registerSynchronization(syncCaptor.capture()) }
+        }
 
         verify(reviewRepository).deleteAllByUserId(userId)
         verify(cleanlinessRepository).deleteAllByUserId(userId)
         verify(toiletRepository).nullifyReportedBy(userId)
-        verify(refreshTokenRepository).delete(userId)
         verify(userRepository).delete(user)
+        // RefreshToken 삭제는 afterCommit 콜백에서만 실행
+        verify(refreshTokenRepository, never()).delete(userId)
+    }
+
+    @Test
+    fun `deleteAccount - afterCommit 콜백에서 RefreshToken을 삭제한다`() {
+        val userId = 1L
+        `when`(userRepository.findById(userId)).thenReturn(makeUser(userId))
+        val syncCaptor = ArgumentCaptor.forClass(TransactionSynchronization::class.java)
+
+        mockStatic(TransactionSynchronizationManager::class.java).use { mocked ->
+            userService.deleteAccount(userId)
+            mocked.verify { TransactionSynchronizationManager.registerSynchronization(syncCaptor.capture()) }
+        }
+
+        syncCaptor.value.afterCommit()
+
+        verify(refreshTokenRepository).delete(userId)
     }
 
     @Test

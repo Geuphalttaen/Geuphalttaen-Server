@@ -17,7 +17,7 @@ interface CleanlinessJpaRepository : JpaRepository<CleanlinessEntity, Long> {
     fun findAverageByToiletId(@Param("toiletId") toiletId: Long): Double?
 
     @Transactional
-    @Modifying(clearAutomatically = true)
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM CleanlinessEntity c WHERE c.userId = :userId")
     fun deleteAllByUserId(@Param("userId") userId: Long)
 }

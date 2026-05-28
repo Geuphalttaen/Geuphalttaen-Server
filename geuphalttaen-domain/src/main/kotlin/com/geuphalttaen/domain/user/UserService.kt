@@ -9,6 +9,7 @@ import com.geuphalttaen.domain.auth.UserRepository
 import com.geuphalttaen.domain.review.CleanlinessRepository
 import com.geuphalttaen.domain.review.ReviewRepository
 import com.geuphalttaen.domain.toilet.ToiletRepository
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.transaction.support.TransactionSynchronization
@@ -23,6 +24,7 @@ class UserService(
     private val cleanlinessRepository: CleanlinessRepository,
     private val refreshTokenRepository: RefreshTokenRepository,
 ) {
+    private val logger = LoggerFactory.getLogger(UserService::class.java)
     private val formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd")
 
     fun getProfile(userId: Long): UserProfileResponse {
@@ -62,7 +64,11 @@ class UserService(
         // 4. RefreshToken 삭제 — Redis는 JPA 트랜잭션에 참여하지 않으므로 커밋 확정 후 실행
         TransactionSynchronizationManager.registerSynchronization(object : TransactionSynchronization {
             override fun afterCommit() {
-                refreshTokenRepository.delete(userId)
+                try {
+                    refreshTokenRepository.delete(userId)
+                } catch (e: Exception) {
+                    logger.error("회원 탈퇴 후 RefreshToken 삭제 실패 (userId={}). 토큰이 Redis에 잔류할 수 있습니다.", userId, e)
+                }
             }
         })
     }
