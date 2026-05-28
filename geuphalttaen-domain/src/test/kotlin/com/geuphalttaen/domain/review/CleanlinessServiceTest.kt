@@ -34,6 +34,52 @@ class CleanlinessServiceTest {
     }
 
     // ──────────────────────────────────────────
+    // getMyCleanliness
+    // ──────────────────────────────────────────
+
+    @Test
+    fun `getMyCleanliness - 내 청결도 평가가 있으면 반환한다`() {
+        val toiletId = 1L
+        val userId = 10L
+        val entity = CleanlinessEntity(id = 1L, toiletId = toiletId, userId = userId, score = 4)
+
+        `when`(toiletRepository.findById(toiletId)).thenReturn(makeToiletEntity(toiletId))
+        `when`(cleanlinessRepository.findByToiletIdAndUserId(toiletId, userId)).thenReturn(entity)
+
+        val result = cleanlinessService.getMyCleanliness(userId, toiletId)
+
+        assertThat(result).isNotNull
+        assertThat(result!!.toiletId).isEqualTo(toiletId)
+        assertThat(result.userId).isEqualTo(userId)
+        assertThat(result.score).isEqualTo(4)
+    }
+
+    @Test
+    fun `getMyCleanliness - 내 청결도 평가가 없으면 null을 반환한다`() {
+        val toiletId = 1L
+        val userId = 10L
+
+        `when`(toiletRepository.findById(toiletId)).thenReturn(makeToiletEntity(toiletId))
+        `when`(cleanlinessRepository.findByToiletIdAndUserId(toiletId, userId)).thenReturn(null)
+
+        val result = cleanlinessService.getMyCleanliness(userId, toiletId)
+
+        assertThat(result).isNull()
+    }
+
+    @Test
+    fun `getMyCleanliness - 화장실이 없으면 TOILET_NOT_FOUND 예외를 던진다`() {
+        `when`(toiletRepository.findById(999L)).thenReturn(null)
+
+        assertThatThrownBy {
+            cleanlinessService.getMyCleanliness(userId = 1L, toiletId = 999L)
+        }
+            .isInstanceOf(BusinessException::class.java)
+            .extracting { (it as BusinessException).errorCode }
+            .isEqualTo(ErrorCode.TOILET_NOT_FOUND)
+    }
+
+    // ──────────────────────────────────────────
     // upsert
     // ──────────────────────────────────────────
 

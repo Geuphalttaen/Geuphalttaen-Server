@@ -12,6 +12,12 @@ class CleanlinessService(
     private val cleanlinessRepository: CleanlinessRepository,
     private val toiletRepository: ToiletRepository,
 ) {
+    @Transactional(readOnly = true)
+    fun getMyCleanliness(userId: Long, toiletId: Long): CleanlinessResponse? {
+        toiletRepository.findById(toiletId) ?: throw BusinessException(ErrorCode.TOILET_NOT_FOUND)
+        return cleanlinessRepository.findByToiletIdAndUserId(toiletId, userId)?.toResponse()
+    }
+
     @Transactional
     fun upsert(userId: Long, toiletId: Long, request: CleanlinessRequest): CleanlinessResponse {
         toiletRepository.findById(toiletId) ?: throw BusinessException(ErrorCode.TOILET_NOT_FOUND)

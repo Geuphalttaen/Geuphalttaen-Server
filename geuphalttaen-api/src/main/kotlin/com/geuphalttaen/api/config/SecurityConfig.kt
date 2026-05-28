@@ -55,6 +55,9 @@ class SecurityConfig(
             }
             .authorizeHttpRequests { auth ->
                 auth
+                    // 인증 필요 엔드포인트를 와일드카드 permitAll보다 먼저 선언
+                    .requestMatchers(HttpMethod.GET, "/api/v1/toilets/*/reviews/my").authenticated()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/toilets/*/cleanliness/my").authenticated()
                     .requestMatchers(HttpMethod.GET, "/api/v1/toilets").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/toilets/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/directions").permitAll()

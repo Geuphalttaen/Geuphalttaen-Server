@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param
 
 interface ReviewJpaRepository : JpaRepository<ReviewEntity, Long> {
     fun existsByToiletIdAndUserId(toiletId: Long, userId: Long): Boolean
+    fun findByToiletIdAndUserId(toiletId: Long, userId: Long): ReviewEntity?
     fun findAllByToiletId(toiletId: Long, pageable: Pageable): Page<ReviewEntity>
 
     @Query("SELECT r.toiletId, AVG(r.rating), COUNT(r) FROM ReviewEntity r WHERE r.toiletId IN :toiletIds GROUP BY r.toiletId")

@@ -37,14 +37,17 @@ class ImageService(
         val base = "${imageStoragePort.baseFolder()}/$userId"
 
         val originalKey = "$base/original/$uuid.$ext"
-        val originalUrl = imageStoragePort.upload(originalKey, contentType, data)
+        imageStoragePort.upload(originalKey, contentType, data)
 
         val webpBytes = imageConversionPort.toWebP(data)
         val webpKey = "$base/webp/$uuid.webp"
-        val webpUrl = imageStoragePort.upload(webpKey, "image/webp", webpBytes)
+        imageStoragePort.upload(webpKey, "image/webp", webpBytes)
 
-        return ImageUploadResult(url = webpUrl, originalUrl = originalUrl)
+        // 키(경로)만 반환 — 도메인은 응답 레이어에서 toPublicUrl()로 조합
+        return ImageUploadResult(url = webpKey, originalUrl = originalKey)
     }
+
+    fun toPublicUrl(keyOrUrl: String): String = imageStoragePort.toPublicUrl(keyOrUrl)
 
     fun validateUrls(urls: List<String>) {
         val invalid = urls.filter { !imageStoragePort.isOwnUrl(it) }

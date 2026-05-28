@@ -23,7 +23,7 @@ class ToiletService(
         val entities = toiletRepository.findNearby(request.lat, request.lng, request.radiusMeters)
         val toiletIds = entities.map { it.id }
         val imageMap = toiletRepository.findImagesByToiletIds(toiletIds)
-            .groupBy({ it.toiletId }, { it.url })
+            .groupBy({ it.toiletId }, { imageService.toPublicUrl(it.url) })
         val reviewStatsMap = if (toiletIds.isNotEmpty()) reviewRepository.findStatsByToiletIds(toiletIds) else emptyMap()
         val cleanlinessMap = if (toiletIds.isNotEmpty()) cleanlinessRepository.findAveragesByToiletIds(toiletIds) else emptyMap()
         return entities.map {
@@ -41,7 +41,7 @@ class ToiletService(
 
     fun getById(id: Long): ToiletResponse {
         val entity = toiletRepository.findById(id) ?: throw BusinessException(ErrorCode.TOILET_NOT_FOUND)
-        val images = toiletRepository.findImagesByToiletId(id).map { it.url }
+        val images = toiletRepository.findImagesByToiletId(id).map { imageService.toPublicUrl(it.url) }
         val stats = reviewRepository.findStatsByToiletId(id)
         val avgCleanliness = cleanlinessRepository.findAverageByToiletId(id)
         return entity.toResponse(
@@ -78,7 +78,7 @@ class ToiletService(
             val imageEntities = request.images.map {
                 ToiletImageEntity(toiletId = saved.id, url = it.url, originalUrl = it.originalUrl)
             }
-            toiletRepository.saveImages(imageEntities).map { it.url }
+            toiletRepository.saveImages(imageEntities).map { imageService.toPublicUrl(it.url) }
         } else emptyList()
 
         // 신규 제보 화장실은 리뷰/청결도 데이터 없음

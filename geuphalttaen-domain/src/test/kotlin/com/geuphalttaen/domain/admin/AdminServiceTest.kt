@@ -4,9 +4,11 @@ import com.geuphalttaen.common.exception.BusinessException
 import com.geuphalttaen.common.exception.ErrorCode
 import com.geuphalttaen.core.entity.AdminEntity
 import com.geuphalttaen.core.entity.ToiletEntity
+import com.geuphalttaen.core.entity.ToiletImageEntity
 import com.geuphalttaen.core.entity.ToiletStatus
 import com.geuphalttaen.domain.auth.JwtProperties
 import com.geuphalttaen.domain.auth.JwtProvider
+import com.geuphalttaen.domain.image.ImageService
 import com.geuphalttaen.domain.toilet.ToiletRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -17,6 +19,7 @@ import org.mockito.Mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.mockito.junit.jupiter.MockitoExtension
+import org.mockito.kotlin.any
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
@@ -35,6 +38,9 @@ class AdminServiceTest {
     @Mock
     private lateinit var toiletRepository: ToiletRepository
 
+    @Mock
+    private lateinit var imageService: ImageService
+
     private lateinit var jwtProvider: JwtProvider
     private lateinit var adminService: AdminService
     private lateinit var passwordEncoder: BCryptPasswordEncoder
@@ -52,6 +58,7 @@ class AdminServiceTest {
             jwtProvider,
             passwordEncoder,
             AdminProperties(seedSecret = testSeedSecret),
+            imageService,
         )
     }
 
@@ -154,6 +161,21 @@ class AdminServiceTest {
         val result = adminService.getReport(5L)
 
         assertThat(result.id).isEqualTo(5L)
+    }
+
+    @Test
+    fun `getReport - 이미지가 있는 화장실은 toPublicUrl이 적용된 imageUrls를 반환한다`() {
+        val entity = makeToiletEntity(id = 5L)
+        val images = listOf(
+            ToiletImageEntity(toiletId = 5L, url = "local/toilet-images/1/webp/img.webp", originalUrl = "local/toilet-images/1/original/img.jpg"),
+        )
+        `when`(toiletRepository.findById(5L)).thenReturn(entity)
+        `when`(toiletRepository.findImagesByToiletId(5L)).thenReturn(images)
+        `when`(imageService.toPublicUrl(any())).thenAnswer { "https://images.geuphalttaen.com/${it.arguments[0]}" }
+
+        val result = adminService.getReport(5L)
+
+        assertThat(result.imageUrls).containsExactly("https://images.geuphalttaen.com/local/toilet-images/1/webp/img.webp")
     }
 
     @Test

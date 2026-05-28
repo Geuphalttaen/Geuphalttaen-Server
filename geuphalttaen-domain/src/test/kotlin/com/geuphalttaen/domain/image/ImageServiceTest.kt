@@ -7,14 +7,13 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.ArgumentCaptor
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
-import org.mockito.kotlin.verify
 import org.mockito.kotlin.atLeastOnce
+import org.mockito.kotlin.verify
 
 @ExtendWith(MockitoExtension::class)
 class ImageServiceTest {
@@ -37,26 +36,25 @@ class ImageServiceTest {
     // ──────────────────────────────────────────
 
     @Test
-    fun `upload - JPEG 매직 바이트가 올바르면 성공한다`() {
+    fun `upload - JPEG 매직 바이트가 올바르면 키를 반환한다`() {
         val jpegBytes = jpegMagic() + ByteArray(100)
         `when`(imageStoragePort.baseFolder()).thenReturn("local/toilet-images")
-        `when`(imageStoragePort.upload(any(), any(), any())).thenReturn("https://cdn.example.com/img.webp")
         `when`(imageConversionPort.toWebP(any(), any(), any())).thenReturn(ByteArray(50))
 
         val result = imageService.upload(jpegBytes, "image/jpeg", userId = 42L)
 
-        assertThat(result.url).isEqualTo("https://cdn.example.com/img.webp")
-        assertThat(result.originalUrl).isEqualTo("https://cdn.example.com/img.webp")
+        assertThat(result.url).startsWith("local/toilet-images/42/webp/")
+        assertThat(result.url).endsWith(".webp")
+        assertThat(result.originalUrl).startsWith("local/toilet-images/42/original/")
+        assertThat(result.originalUrl).endsWith(".jpg")
 
         val keyCaptor = argumentCaptor<String>()
         verify(imageStoragePort, atLeastOnce()).upload(keyCaptor.capture(), any(), any())
         assertThat(keyCaptor.allValues).anySatisfy { key ->
             assertThat(key).startsWith("local/toilet-images/42/original/")
-            assertThat(key).endsWith(".jpg")
         }
         assertThat(keyCaptor.allValues).anySatisfy { key ->
             assertThat(key).startsWith("local/toilet-images/42/webp/")
-            assertThat(key).endsWith(".webp")
         }
     }
 
@@ -64,7 +62,6 @@ class ImageServiceTest {
     fun `upload - PNG 매직 바이트가 올바르면 성공한다`() {
         val pngBytes = pngMagic() + ByteArray(100)
         `when`(imageStoragePort.baseFolder()).thenReturn("local/toilet-images")
-        `when`(imageStoragePort.upload(any(), any(), any())).thenReturn("https://cdn.example.com/img.webp")
         `when`(imageConversionPort.toWebP(any(), any(), any())).thenReturn(ByteArray(50))
 
         val result = imageService.upload(pngBytes, "image/png", userId = 42L)
