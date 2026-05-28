@@ -107,6 +107,7 @@ class ToiletServiceTest {
         `when`(toiletRepository.findImagesByToiletId(42L)).thenReturn(images)
         `when`(reviewRepository.findStatsByToiletId(42L)).thenReturn(ReviewStats(null, 0L))
         `when`(cleanlinessRepository.findAverageByToiletId(42L)).thenReturn(null)
+        `when`(imageService.toPublicUrl(any())).thenAnswer { it.arguments[0] as String }
 
         val result = toiletService.getById(42L)
 
@@ -168,6 +169,7 @@ class ToiletServiceTest {
         doNothing().`when`(imageService).validateUrls(any())
         `when`(toiletRepository.save(anyNonNull(ToiletEntity::class.java))).thenReturn(savedEntity)
         `when`(toiletRepository.saveImages(any())).thenReturn(savedImages)
+        `when`(imageService.toPublicUrl(any())).thenAnswer { it.arguments[0] as String }
 
         val result = toiletService.report(userId = 7L, request = request)
 

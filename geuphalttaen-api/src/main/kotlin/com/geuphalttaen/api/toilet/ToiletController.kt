@@ -48,7 +48,12 @@ class ToiletController(
     ): ApiResponse<ImageUploadResponse> {
         val contentType = file.contentType ?: "application/octet-stream"
         val result = imageService.upload(file.bytes, contentType, userId)
-        return ApiResponse.ok(ImageUploadResponse(url = result.url, originalUrl = result.originalUrl))
+        return ApiResponse.ok(
+            ImageUploadResponse(
+                url = imageService.toPublicUrl(result.url),
+                originalUrl = imageService.toPublicUrl(result.originalUrl),
+            ),
+        )
     }
 
     @Operation(summary = "화장실 제보 (인증 필요)")

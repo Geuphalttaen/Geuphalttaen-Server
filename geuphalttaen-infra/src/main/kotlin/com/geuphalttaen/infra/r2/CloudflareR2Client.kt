@@ -42,7 +42,7 @@ class CloudflareR2Client(
     }
     private val s3Client: S3Client by s3ClientLazy
 
-    override fun upload(objectKey: String, contentType: String, data: ByteArray): String {
+    override fun upload(objectKey: String, contentType: String, data: ByteArray) {
         s3Client.putObject(
             PutObjectRequest.builder()
                 .bucket(properties.bucketName)
@@ -51,16 +51,28 @@ class CloudflareR2Client(
                 .build(),
             RequestBody.fromBytes(data),
         )
-        return "${properties.publicUrl.trimEnd('/')}/$objectKey"
     }
 
-    override fun isOwnUrl(url: String): Boolean {
-        val base = properties.publicUrl.trimEnd('/') + "/"
-        return url.startsWith(base)
+    override fun toPublicUrl(keyOrUrl: String): String {
+        val key = extractKey(keyOrUrl)
+        return "${properties.publicUrl.trimEnd('/')}/$key"
+    }
+
+    override fun isOwnUrl(keyOrUrl: String): Boolean {
+        if (keyOrUrl.startsWith("http://") || keyOrUrl.startsWith("https://")) {
+            val expectedPrefix = "${properties.publicUrl.trimEnd('/')}/${baseFolder()}"
+            return keyOrUrl.startsWith(expectedPrefix)
+        }
+        return keyOrUrl.startsWith(baseFolder())
     }
 
     override fun baseFolder(): String =
         "${properties.profile.trimEnd('/')}/${properties.folder.trimEnd('/')}"
+
+    // 전체 URL(http(s)://...)이면 경로 부분만 추출, 키 형식이면 그대로 반환
+    private fun extractKey(keyOrUrl: String): String =
+        if (keyOrUrl.startsWith("http://") || keyOrUrl.startsWith("https://"))
+            URI.create(keyOrUrl).path.trimStart('/') else keyOrUrl
 
     @PreDestroy
     fun close() {
