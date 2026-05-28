@@ -9,6 +9,7 @@ interface ReviewRepository {
     fun findById(id: Long): ReviewEntity?
     fun delete(entity: ReviewEntity)
     fun existsByToiletIdAndUserId(toiletId: Long, userId: Long): Boolean
+    fun findByToiletIdAndUserId(toiletId: Long, userId: Long): ReviewEntity?
     fun findByToiletIdPageable(toiletId: Long, pageable: Pageable): Page<ReviewEntity>
     fun findStatsByToiletIds(toiletIds: List<Long>): Map<Long, ReviewStats>
     fun findStatsByToiletId(toiletId: Long): ReviewStats

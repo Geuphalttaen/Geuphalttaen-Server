@@ -144,6 +144,84 @@ class ReviewServiceTest {
     }
 
     // ──────────────────────────────────────────
+    // getMyReview
+    // ──────────────────────────────────────────
+
+    @Test
+    fun `getMyReview - 내 리뷰가 있으면 반환한다`() {
+        val toiletId = 1L
+        val userId = 10L
+        val entity = makeReviewEntity(id = 3L, toiletId = toiletId, userId = userId, rating = 5)
+        `when`(toiletRepository.findById(toiletId)).thenReturn(makeToiletEntity(toiletId))
+        `when`(reviewRepository.findByToiletIdAndUserId(toiletId, userId)).thenReturn(entity)
+
+        val result = reviewService.getMyReview(userId, toiletId)
+
+        assertThat(result).isNotNull
+        assertThat(result!!.rating).isEqualTo(5)
+        assertThat(result.userId).isEqualTo(userId)
+    }
+
+    @Test
+    fun `getMyReview - 내 리뷰가 없으면 null을 반환한다`() {
+        val toiletId = 1L
+        val userId = 10L
+        `when`(toiletRepository.findById(toiletId)).thenReturn(makeToiletEntity(toiletId))
+        `when`(reviewRepository.findByToiletIdAndUserId(toiletId, userId)).thenReturn(null)
+
+        val result = reviewService.getMyReview(userId, toiletId)
+
+        assertThat(result).isNull()
+    }
+
+    @Test
+    fun `getMyReview - 화장실이 없으면 TOILET_NOT_FOUND 예외를 던진다`() {
+        `when`(toiletRepository.findById(999L)).thenReturn(null)
+
+        assertThatThrownBy {
+            reviewService.getMyReview(userId = 1L, toiletId = 999L)
+        }
+            .isInstanceOf(BusinessException::class.java)
+            .extracting { (it as BusinessException).errorCode }
+            .isEqualTo(ErrorCode.TOILET_NOT_FOUND)
+    }
+
+    // ──────────────────────────────────────────
+    // updateMyReview
+    // ──────────────────────────────────────────
+
+    @Test
+    fun `updateMyReview - 기존 리뷰를 수정하고 반환한다`() {
+        val toiletId = 1L
+        val userId = 10L
+        val entity = makeReviewEntity(id = 2L, toiletId = toiletId, userId = userId, rating = 3, content = "보통")
+        `when`(toiletRepository.findById(toiletId)).thenReturn(makeToiletEntity(toiletId))
+        `when`(reviewRepository.findByToiletIdAndUserId(toiletId, userId)).thenReturn(entity)
+        `when`(reviewRepository.save(entity)).thenReturn(entity)
+
+        val result = reviewService.updateMyReview(userId, toiletId, ReviewRequest(rating = 5, content = "좋아요"))
+
+        assertThat(result.rating).isEqualTo(5)
+        assertThat(result.content).isEqualTo("좋아요")
+        verify(reviewRepository).save(entity)
+    }
+
+    @Test
+    fun `updateMyReview - 리뷰가 없으면 REVIEW_NOT_FOUND 예외를 던진다`() {
+        val toiletId = 1L
+        val userId = 10L
+        `when`(toiletRepository.findById(toiletId)).thenReturn(makeToiletEntity(toiletId))
+        `when`(reviewRepository.findByToiletIdAndUserId(toiletId, userId)).thenReturn(null)
+
+        assertThatThrownBy {
+            reviewService.updateMyReview(userId, toiletId, ReviewRequest(rating = 4))
+        }
+            .isInstanceOf(BusinessException::class.java)
+            .extracting { (it as BusinessException).errorCode }
+            .isEqualTo(ErrorCode.REVIEW_NOT_FOUND)
+    }
+
+    // ──────────────────────────────────────────
     // 헬퍼
     // ──────────────────────────────────────────
 

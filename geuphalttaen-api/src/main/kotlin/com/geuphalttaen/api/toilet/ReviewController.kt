@@ -37,6 +37,25 @@ class ReviewController(
         return ApiResponse.ok(reviewService.addReview(userId, id, request))
     }
 
+    @Operation(summary = "내 리뷰 조회 (인증 필요) — 작성한 리뷰가 없으면 null 반환", security = [SecurityRequirement(name = "bearerAuth")])
+    @GetMapping("/reviews/my")
+    fun getMyReview(
+        @AuthenticationPrincipal userId: Long,
+        @PathVariable id: Long,
+    ): ApiResponse<ReviewResponse?> {
+        return ApiResponse.ok(reviewService.getMyReview(userId, id))
+    }
+
+    @Operation(summary = "내 리뷰 수정 (인증 필요)", security = [SecurityRequirement(name = "bearerAuth")])
+    @PatchMapping("/reviews/my")
+    fun updateMyReview(
+        @AuthenticationPrincipal userId: Long,
+        @PathVariable id: Long,
+        @Valid @RequestBody request: ReviewRequest,
+    ): ApiResponse<ReviewResponse> {
+        return ApiResponse.ok(reviewService.updateMyReview(userId, id, request))
+    }
+
     @Operation(summary = "리뷰 목록 조회 (인증 불필요)")
     @GetMapping("/reviews")
     fun getReviews(
