@@ -45,4 +45,6 @@ class ReviewRepositoryImpl(
         val count = (row[1] as? Number)?.toLong() ?: 0L
         return ReviewStats(averageRating = avg, reviewCount = count)
     }
+
+    override fun deleteAllByUserId(userId: Long) = jpaRepository.deleteAllByUserId(userId)
 }
