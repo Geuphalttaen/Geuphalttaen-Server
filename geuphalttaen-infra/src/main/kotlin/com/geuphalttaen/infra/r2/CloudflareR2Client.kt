@@ -59,15 +59,20 @@ class CloudflareR2Client(
     }
 
     override fun isOwnUrl(keyOrUrl: String): Boolean {
-        return extractKey(keyOrUrl).startsWith(baseFolder())
+        if (keyOrUrl.startsWith("http://") || keyOrUrl.startsWith("https://")) {
+            val expectedPrefix = "${properties.publicUrl.trimEnd('/')}/${baseFolder()}"
+            return keyOrUrl.startsWith(expectedPrefix)
+        }
+        return keyOrUrl.startsWith(baseFolder())
     }
 
     override fun baseFolder(): String =
         "${properties.profile.trimEnd('/')}/${properties.folder.trimEnd('/')}"
 
-    // 전체 URL(https://...)이면 경로 부분만 추출, 키 형식이면 그대로 반환
+    // 전체 URL(http(s)://...)이면 경로 부분만 추출, 키 형식이면 그대로 반환
     private fun extractKey(keyOrUrl: String): String =
-        if (keyOrUrl.startsWith("https://")) URI.create(keyOrUrl).path.trimStart('/') else keyOrUrl
+        if (keyOrUrl.startsWith("http://") || keyOrUrl.startsWith("https://"))
+            URI.create(keyOrUrl).path.trimStart('/') else keyOrUrl
 
     @PreDestroy
     fun close() {
