@@ -24,7 +24,6 @@ interface ToiletJpaRepository : JpaRepository<ToiletEntity, Long> {
     @Query("DELETE FROM ToiletEntity t WHERE t.address IN :addresses")
     fun deleteByAddressIn(addresses: Collection<String>)
 
-    @Transactional
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE ToiletEntity t SET t.reportedBy = null WHERE t.reportedBy = :userId")
     fun nullifyReportedBy(@Param("userId") userId: Long)
